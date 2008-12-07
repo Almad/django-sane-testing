@@ -25,7 +25,7 @@ setup(
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.5",
-        "Topic :: Internet :: WWW/HTTP",
+        "Topic :: Software Development :: Testing",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ]
 )
