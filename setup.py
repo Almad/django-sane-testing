@@ -11,13 +11,13 @@ project_dir = 'djangosanetesting'
 # Dynamically calculate the version based on django.VERSION.
 version = __import__('djangosanetesting').__versionstr__
 setup(
-    name = "djangohttpdigest",
+    name = "djangosanetesting",
     version = version,
     url = 'http://devel.almad.net/trac/django-sane-testing/',
     author = 'Lukas Linhart',
     author_email = 'bugs@almad.net',
     description = 'Support for various testing tools for Django web framework',
-    packages = ['djangohttpdigest'],
+    packages = ['djangosanetesting'],
     scripts = [],
     classifiers=[
         "Development Status :: 4 - Beta",
