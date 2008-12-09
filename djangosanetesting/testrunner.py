@@ -1,5 +1,7 @@
 import sys
 
+from noseplugins import LiveHttpServerRunnerPlugin
+
 from django.conf import settings
 from django.test.utils import setup_test_environment, teardown_test_environment
 
@@ -18,7 +20,7 @@ def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
 
     # we have to strip script name before passing to nose
     sys.argv = argv_backup[0:1]
-    config = Config(files=all_config_files(), plugins=DefaultPluginManager())
+    config = Config(files=all_config_files(), plugins=DefaultPluginManager([LiveHttpServerRunnerPlugin()]))
 
     nose.run(config=config)
 
