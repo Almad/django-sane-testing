@@ -16,9 +16,15 @@ class TestLiveServerRunning(HttpTestCase):
         self.host = 'localhost'
         self.port = 8000
     
-    def test_server_retrievable(self):
+    def get_ok(self):
         self.assertEquals(u'200 OK', urllib2.urlopen('http://%(host)s:%(port)s/testtwohundred/' % {
             'host' : self.host,
             'port' : self.port
         }).read())
+    
+    def test_http_retrievable(self):
+        return self.get_ok()
+    
+    def test_http_retrievable_repeatedly(self):
+        return self.get_ok()
 

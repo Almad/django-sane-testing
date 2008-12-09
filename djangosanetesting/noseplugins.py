@@ -107,6 +107,7 @@ class LiveHttpServerRunnerPlugin(Plugin):
 
         if not self.server_started and (issubclass(cls, HttpTestCase) or (hasattr(cls, "start_live_server") and cls.start_live_server)):
             self.start_server()
+            self.server_started = True
 
     def start_server(self, address='0.0.0.0', port=8000):
         self.server_thread = TestServerThread(address, port)
