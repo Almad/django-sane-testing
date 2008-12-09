@@ -1,0 +1,10 @@
+syntax: glob
+*.pyc
+*.ini
+*.swp
+*.orig
+.project
+.pydevproject
+*.db
+.settings
+*~
