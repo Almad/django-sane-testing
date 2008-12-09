@@ -1,4 +1,5 @@
-from django.test.utils import setup_test_environment, teardown_test_environment, create_test_db, destroy_test_db
+from django.test.utils import setup_test_environment, teardown_test_environment
+from django.test.db.creation import create_test_db, destroy_test_db
 import nose
 
 def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
