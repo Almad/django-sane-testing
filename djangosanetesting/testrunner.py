@@ -1,20 +1,32 @@
+import sys
+
+from django.conf import settings
 from django.test.utils import setup_test_environment, teardown_test_environment
-from django.db.backends.creation import create_test_db, destroy_test_db
+
 import nose
+from nose.config import Config, all_config_files
+from nose.plugins.manager import DefaultPluginManager
 
 def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     """ Run tests with nose instead of defualt test runner """
     setup_test_environment()
+
+    from django.db import connection
     old_name = settings.DATABASE_NAME
-    create_test_db(verbosity, autoclobber=not interactive)
+    connection.creation.create_test_db(verbosity, autoclobber=not interactive)
     argv_backup = sys.argv
+
     # we have to strip script name before passing to nose
     sys.argv = argv_backup[0:1]
     config = Config(files=all_config_files(), plugins=DefaultPluginManager())
+
     nose.run(config=config)
+
     sys.argv = argv_backup
-    destroy_test_db(old_name, verbosity)
+    connection.creation.destroy_test_db(old_name, verbosity)
     teardown_test_environment()
+
+    #TODO: return len(result.failures) + len(result.errors)
 
 run_tests.__test__ = False
 
