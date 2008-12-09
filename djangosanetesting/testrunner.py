@@ -1,5 +1,5 @@
 from django.test.utils import setup_test_environment, teardown_test_environment
-from django.test.db.creation import create_test_db, destroy_test_db
+from django.db.backends.creation import create_test_db, destroy_test_db
 import nose
 
 def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
@@ -15,5 +15,6 @@ def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     sys.argv = argv_backup
     destroy_test_db(old_name, verbosity)
     teardown_test_environment()
-    run_tests.__test__ = False
+
+run_tests.__test__ = False
 
