@@ -3,6 +3,7 @@ import sys
 from noseplugins import LiveHttpServerRunnerPlugin
 
 from django.conf import settings
+from django.core.management import setup_environ
 from django.test.utils import setup_test_environment, teardown_test_environment
 
 import nose
@@ -11,6 +12,7 @@ from nose.plugins.manager import DefaultPluginManager
 
 def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     """ Run tests with nose instead of defualt test runner """
+    setup_environ(settings)
     setup_test_environment()
 
     from django.db import connection
