@@ -3,7 +3,6 @@ import sys
 from noseplugins import LiveHttpServerRunnerPlugin
 
 from django.conf import settings
-from django.core.management import setup_environ
 from django.test.utils import setup_test_environment, teardown_test_environment
 
 import nose
