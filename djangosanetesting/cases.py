@@ -1,4 +1,5 @@
 from django.test import TestCase as DjangoTestCase
+from django.db import transaction
 
 from nose.tools import (
                 assert_equals,
@@ -38,4 +39,18 @@ class HttpTestCase(SaneTestCase):
     If it is not running, our plugin should start HTTP server
     so we can use it with urllib2 or some webtester.
     """
+
+class DatabaseTestCase(SaneTestCase):
+    """ Tests using database for models: Rollback on teardown"""
     
+    def setUp(self):
+        transaction.enter_transaction_management()
+        transaction.managed(True)
+        super(DatabaseTestCase, self).setUp()
+    
+    def tearDown(self):
+        transaction.rollback()
+        transaction.leave_transaction_management()
+        super(DatabaseTestCase, self).tearDown()
+    
+

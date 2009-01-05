@@ -46,6 +46,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.admin',
+    'testapp',
 )
 
 TEST_RUNNER='djangosanetesting.testrunner.run_tests'
