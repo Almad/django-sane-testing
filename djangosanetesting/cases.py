@@ -39,11 +39,3 @@ class HttpTestCase(SaneTestCase):
     so we can use it with urllib2 or some webtester.
     """
     
-    def __init__(self):
-        SaneTestCase.__init__(self)
-    
-    def setUp(self):
-        SaneTestCase.setUp(self)
-
-    def tearDown(self):
-        SaneTestCase.tearDown(self)
