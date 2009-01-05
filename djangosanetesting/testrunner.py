@@ -12,7 +12,6 @@ from nose.plugins.manager import DefaultPluginManager
 
 def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     """ Run tests with nose instead of defualt test runner """
-    setup_environ(settings)
     setup_test_environment()
 
     from django.db import connection
