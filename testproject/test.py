@@ -1,10 +1,8 @@
 import urllib2
 
-from django.test import TestCase
+from djangosanetesting.cases import HttpTestCase, UnitTestCase
 
-from djangosanetesting.cases import HttpTestCase
-
-class TestUnit(TestCase):
+class TestUnit(UnitTestCase):
     def test_empty(self):
         pass
 

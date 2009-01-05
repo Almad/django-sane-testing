@@ -25,6 +25,12 @@ class SaneTestCase(object):
     
     def tearDown(self):
         pass
+
+class UnitTestCase(SaneTestCase):
+    """
+    This class is a unittest, i.e. do not interact with database et al
+    and thus not need any special treatment.
+    """
     
 class HttpTestCase(SaneTestCase):
     start_live_server = True
