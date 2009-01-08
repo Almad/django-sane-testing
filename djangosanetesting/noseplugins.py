@@ -85,20 +85,20 @@ class LiveHttpServerRunnerPlugin(Plugin):
     
     Taken from Michael Rogers implementation from http://trac.getwindmill.com/browser/trunk/windmill/authoring/djangotest.py
     """
-    enabled = True
+    
+    activation_parameter = '--with-livehttpserver'
     
     def __init__(self):
         super(self.__class__, self).__init__()
         self.server_started = False
         self.server_thread = None
-    
+        
     def options(self, parser, env=os.environ):
-        pass
+        Plugin.options(self, parser, env)
 
-    def configure(self, options, conf):
-        if not self.can_configure:
-            return
-
+    def configure(self, options, config):
+        Plugin.configure(self, options, config)
+        
     def startTest(self, test):
         if isinstance(test.test, nose.case.MethodTestCase):
             cls = test.test.test.im_class

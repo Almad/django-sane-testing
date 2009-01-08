@@ -27,5 +27,10 @@ setup(
         "Programming Language :: Python :: 2.5",
         "Topic :: Software Development :: Testing",
         "Topic :: Software Development :: Libraries :: Python Modules",
-    ]
+    ],
+    entry_points = {
+        'nose.plugins.0.10': [
+            'livehttpserver = noseplugins:LiveHttpServerRunnerPlugin'
+        ]
+    }
 )

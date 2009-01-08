@@ -21,12 +21,18 @@ def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     # we have to strip script name before passing to nose
 #    sys.argv = argv_backup[0:1]
     config = Config(files=all_config_files(), plugins=DefaultPluginManager([LiveHttpServerRunnerPlugin()]))
-
-    nose.run(config=config)
+    
+    # activate all required plugins
+    if LiveHttpServerRunnerPlugin.activation_parameter not in sys.argv:
+        sys.argv.append(LiveHttpServerRunnerPlugin.activation_parameter)
+    
+    success = nose.run(config=config)
 
     sys.argv = argv_backup
     connection.creation.destroy_test_db(old_name, verbosity)
     teardown_test_environment()
+    
+    return success
 
     #TODO: return len(result.failures) + len(result.errors)
 
