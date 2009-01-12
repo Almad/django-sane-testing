@@ -7,5 +7,9 @@ syntax: glob
 .pydevproject
 *.db
 .settings
+*.patch
 *~
 testproject/config.py
+build
+dist
+MANIFEST
