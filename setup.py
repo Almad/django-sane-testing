@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
-from distutils.command.install_data import install_data
-from distutils.command.install import INSTALL_SCHEMES
-import os
-import sys
+try:
+    import ez_setup
+    ez_setup.use_setuptools()
+except ImportError:
+    pass
+
+from setuptools import setup
 
 project_dir = 'djangosanetesting'
 
-# Dynamically calculate the version based on django.VERSION.
 version = __import__('djangosanetesting').__versionstr__
 setup(
     name = "djangosanetesting",
@@ -16,7 +17,7 @@ setup(
     url = 'http://devel.almad.net/trac/django-sane-testing/',
     author = 'Lukas Linhart',
     author_email = 'bugs@almad.net',
-    description = 'Support for various testing tools for Django web framework',
+    description = 'Support sane testing in django using nose.',
     packages = ['djangosanetesting'],
     scripts = [],
     classifiers=[
@@ -25,12 +26,14 @@ setup(
         "License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.5",
+        "Programming Language :: Python :: 2.6",
         "Topic :: Software Development :: Testing",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     entry_points = {
         'nose.plugins.0.10': [
-            'livehttpserver = noseplugins:LiveHttpServerRunnerPlugin'
+            'livehttpserver = noseplugins:LiveHttpServerRunnerPlugin',
+            'django = noseplugins:DjangoPlugin',
         ]
     }
 )
