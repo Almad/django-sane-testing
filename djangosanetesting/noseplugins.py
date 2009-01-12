@@ -7,9 +7,6 @@ import os
 
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers import basehttp
-from django.db import transaction
-from django.test.testcases import call_command, TestCase
-from django.test.utils import setup_test_environment, teardown_test_environment
 
 import nose
 from nose import SkipTest
@@ -20,6 +17,7 @@ from cases import HttpTestCase, DatabaseTestCase, DestructiveDatabaseTestCase
 __all__ = ("LiveHttpServerRunnerPlugin", "DjangoPlugin",)
 
 def flush_database(case):
+    from django.test.testcases import call_command
     # there is a need for check if fixtures were involved (= same fixture?)
     call_command('flush', verbosity=0, interactive=False)
     if hasattr(case, 'fixtures'):
@@ -181,6 +179,7 @@ class DjangoPlugin(Plugin):
         """
         When preparing test, check whether to make our database fresh
         """
+        from django.db import transaction
         
         from cases import DatabaseTestCase
         
@@ -199,6 +198,8 @@ class DjangoPlugin(Plugin):
         """
         After test is run, clear urlconf and caches
         """
+        from django.db import transaction
+        
         test_case = get_test_case_class(test)
         
         if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):

@@ -9,10 +9,11 @@ except ImportError:
 from setuptools import setup
 
 project_dir = 'djangosanetesting'
+name = 'djangosanetesting'
 
 version = __import__('djangosanetesting').__versionstr__
 setup(
-    name = "djangosanetesting",
+    name = name, 
     version = version,
     url = 'http://devel.almad.net/trac/django-sane-testing/',
     author = 'Lukas Linhart',
@@ -32,8 +33,8 @@ setup(
     ],
     entry_points = {
         'nose.plugins.0.10': [
-            'livehttpserver = noseplugins:LiveHttpServerRunnerPlugin',
-            'django = noseplugins:DjangoPlugin',
+            'livehttpserver = %s.noseplugins:LiveHttpServerRunnerPlugin' % name,
+            'django = %s.noseplugins:DjangoPlugin' % name,
         ]
     }
 )

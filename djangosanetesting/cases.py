@@ -1,11 +1,8 @@
 from django.core.urlresolvers import clear_url_caches
-from django.test import TestCase as DjangoTestCase
-
 from nose.tools import (
                 assert_equals,
                 assert_raises,
 )
-
 
 class SaneTestCase(object):
     """ Common ancestor we're using our own hierarchy """
