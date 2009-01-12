@@ -104,8 +104,8 @@ class LiveHttpServerRunnerPlugin(Plugin):
     
     Taken from Michael Rogers implementation from http://trac.getwindmill.com/browser/trunk/windmill/authoring/djangotest.py
     """
-    
-    activation_parameter = '--with-livehttpserver'
+    name = 'djangoliveserver'
+    activation_parameter = '--with-djangoliveserver'
     
     def __init__(self):
         super(self.__class__, self).__init__()

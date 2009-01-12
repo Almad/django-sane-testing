@@ -33,7 +33,7 @@ setup(
     ],
     entry_points = {
         'nose.plugins.0.10': [
-            'livehttpserver = %s.noseplugins:LiveHttpServerRunnerPlugin' % name,
+            'djangoliveserver = %s.noseplugins:LiveHttpServerRunnerPlugin' % name,
             'django = %s.noseplugins:DjangoPlugin' % name,
         ]
     }
