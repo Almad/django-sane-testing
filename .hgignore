@@ -8,3 +8,4 @@ syntax: glob
 *.db
 .settings
 *~
+testproject/config.py
