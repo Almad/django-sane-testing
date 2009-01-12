@@ -20,6 +20,7 @@ MANAGERS = ADMINS
 
 DATABASE_ENGINE = "sqlite3"
 DATABASE_NAME = "/tmp/testproject.db"
+TEST_DATABASE_NAME = "/tmp/test_testproject.db"
 DATABASE_USER = ""
 DATABASE_PASSWORD = ""
 DATABASE_HOST = "localhost"

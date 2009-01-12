@@ -20,6 +20,7 @@ MANAGERS = ADMINS
 
 DATABASE_ENGINE = "sqlite3"
 DATABASE_NAME = "/home/almad/tmp/keykeeper.db"
+TEST_DATABASE_NAME = "/home/almad/tmp/test_keykeeper.db"
 DATABASE_USER = ""
 DATABASE_PASSWORD = ""
 DATABASE_HOST = "localhost"

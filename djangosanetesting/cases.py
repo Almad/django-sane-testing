@@ -1,5 +1,5 @@
+from django.core.urlresolvers import clear_url_caches
 from django.test import TestCase as DjangoTestCase
-from django.db import transaction
 
 from nose.tools import (
                 assert_equals,
@@ -8,8 +8,10 @@ from nose.tools import (
 
 
 class SaneTestCase(object):
-    start_live_server = False
     """ Common ancestor we're using our own hierarchy """
+    start_live_server = False
+    database_single_transaction = False
+    database_flush = False
     
     def setUp(self):
         pass
@@ -41,16 +43,18 @@ class HttpTestCase(SaneTestCase):
     """
 
 class DatabaseTestCase(SaneTestCase):
-    """ Tests using database for models: Rollback on teardown"""
+    """
+    Tests using database for models in simple: rollback on teardown and we're out.
     
-    def setUp(self):
-        transaction.enter_transaction_management()
-        transaction.managed(True)
-        super(DatabaseTestCase, self).setUp()
+    However, we must check for fixture difference, if we're using another fixture, we must flush database anyway.
+    """
+    database_single_transaction = True
+    database_flush = False
     
-    def tearDown(self):
-        transaction.rollback()
-        transaction.leave_transaction_management()
-        super(DatabaseTestCase, self).tearDown()
-    
+class DestructiveDatabaseTestCase(DatabaseTestCase):
+    """
+    Test behaving so destructively that it needs database to be flushed.
+    """
+    database_single_transaction = True
+    database_flush = True
 

@@ -7,14 +7,41 @@ import os
 
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers import basehttp
+from django.db import transaction
 from django.test.testcases import call_command, TestCase
+from django.test.utils import setup_test_environment, teardown_test_environment
 
 import nose
+from nose import SkipTest
 from nose.plugins import Plugin
 
-from cases import HttpTestCase
+from cases import HttpTestCase, DatabaseTestCase, DestructiveDatabaseTestCase
 
-__all__ = ("LiveHttpServerRunnerPlugin",)
+__all__ = ("LiveHttpServerRunnerPlugin", "DjangoPlugin",)
+
+def flush_database(case):
+    # there is a need for check if fixtures were involved (= same fixture?)
+    call_command('flush', verbosity=0, interactive=False)
+    if hasattr(case, 'fixtures'):
+        # We have to use this slightly awkward syntax due to the fact
+        # that we're using *args and **kwargs together.
+        call_command('loaddata', *self.fixtures, **{'verbosity': 0})
+    if hasattr(case, 'urls'):
+        case._old_root_urlconf = settings.ROOT_URLCONF
+        settings.ROOT_URLCONF = case.urls
+        clear_url_caches()
+    mail.outbox = []
+    
+def flush_urlconf(case):
+    if hasattr(case, '_old_root_urlconf'):
+        settings.ROOT_URLCONF = case._old_root_urlconf
+        clear_url_caches()
+
+def get_test_case_class(nose_test):
+    if isinstance(nose_test.test, nose.case.MethodTestCase):
+        return nose_test.test.test.im_class
+    else:
+        return nose_test.test.__class__
 
 class StoppableWSGIServer(basehttp.WSGIServer):
     """WSGIServer with short timeout, so that server thread can stop this server."""
@@ -61,14 +88,8 @@ class TestServerThread(threading.Thread):
         from django.conf import settings
         if settings.DATABASE_ENGINE == 'sqlite3' \
             and (not settings.TEST_DATABASE_NAME or settings.TEST_DATABASE_NAME == ':memory:'):
-            from django.db import connection
-            db_name = connection.creation.create_test_db(0)
-            # Import the fixture data into the test database.
-            if hasattr(self, 'fixtures'):
-                # We have to use this slightly awkward syntax due to the fact
-                # that we're using *args and **kwargs together.
-                call_command('loaddata', *self.fixtures, **{'verbosity': 0})
-
+            raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
+        
         # Loop until we get a stop event.
         while not self._stopevent.isSet():
             httpd.handle_request()
@@ -100,11 +121,7 @@ class LiveHttpServerRunnerPlugin(Plugin):
         Plugin.configure(self, options, config)
         
     def startTest(self, test):
-        if isinstance(test.test, nose.case.MethodTestCase):
-            cls = test.test.test.im_class
-        else:
-            cls = test.test.__class__
-
+        cls = get_test_case_class(test)
         if not self.server_started and (issubclass(cls, HttpTestCase) or (hasattr(cls, "start_live_server") and cls.start_live_server)):
             self.start_server()
             self.server_started = True
@@ -120,5 +137,73 @@ class LiveHttpServerRunnerPlugin(Plugin):
         if self.server_thread:
             self.server_thread.join()
 
+class DjangoPlugin(Plugin):
+    """
+    Setup and teardown django test environment
+    """
+    activation_parameter = '--with-django'
+    name = 'django'
 
+    def options(self, parser, env=os.environ):
+        Plugin.options(self, parser, env)
+
+    def configure(self, options, config):
+        Plugin.configure(self, options, config)
+    
+    def begin(self):
+        """
+        Before running database, initialize database et al, so noone will complain
+        """
+        from django.test.utils import setup_test_environment
+        setup_test_environment()
         
+        #FIXME: This should be perhaps moved to startTest and be lazy
+        # for tests that do not need test database at all
+        import settings
+        from django.db import connection
+        self.old_name = settings.DATABASE_NAME
+        
+        connection.creation.create_test_db(verbosity=False, autoclobber=True)
+    
+    def finalize(self, *args, **kwargs):
+        """
+        At the end, tear down our testbed
+        """
+        from django.test.utils import teardown_test_environment
+        teardown_test_environment()
+
+        import settings
+        from django.db import connection
+        connection.creation.destroy_test_db(self.old_name, verbosity=False)
+    
+    
+    def startTest(self, test):
+        """
+        When preparing test, check whether to make our database fresh
+        """
+        
+        from cases import DatabaseTestCase
+        
+        # this only works for methods and is strange, I know
+        # report if you have better idea how to access original testcase instance
+        test_case = get_test_case_class(test)
+        
+        if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
+            transaction.enter_transaction_management()
+            transaction.managed(True)
+        
+        if (hasattr(test_case, "database_flush") and test_case.database_flush is True):
+            flush_database(self)
+
+    def stopTest(self, test):
+        """
+        After test is run, clear urlconf and caches
+        """
+        test_case = get_test_case_class(test)
+        
+        if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
+            transaction.rollback()
+            transaction.leave_transaction_management()
+
+        flush_urlconf(self)
+
