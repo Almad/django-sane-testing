@@ -9,6 +9,7 @@ syntax: glob
 .settings
 *.patch
 *~
+*.egg-info*
 testproject/config.py
 build
 dist
