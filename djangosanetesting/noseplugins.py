@@ -239,7 +239,7 @@ class SeleniumPlugin(Plugin):
                       getattr(settings, "SELENIUM_HOST", 'localhost'),
                       int(getattr(settings, "SELENIUM_PORT", 4444)),
                       getattr(settings, "SELENIUM_BROWSER_COMMAND", '*opera'),
-                      getattr(settings, "SELENIUM_URL_ROOT", getattr(settings, "URL_ROOT", "/")),
+                      getattr(settings, "SELENIUM_URL_ROOT", getattr(settings, "URL_ROOT", "http://localhost:8000/")),
                   ) 
             try:
                 sel.start()
