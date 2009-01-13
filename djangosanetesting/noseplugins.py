@@ -18,6 +18,7 @@ __all__ = ("LiveHttpServerRunnerPlugin", "DjangoPlugin",)
 
 def flush_database(case):
     from django.test.testcases import call_command
+    from django.core import mail
     # there is a need for check if fixtures were involved (= same fixture?)
     call_command('flush', verbosity=0, interactive=False)
     if hasattr(case, 'fixtures'):
