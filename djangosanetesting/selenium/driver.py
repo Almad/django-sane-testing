@@ -94,6 +94,14 @@ class selenium:
         
         Currently the css selector locator supports all css1, css2 and css3 selectors except namespace in css3, some pseudo classes(:nth-of-type, :nth-last-of-type, :first-of-type, :last-of-type, :only-of-type, :visited, :hover, :active, :focus, :indeterminate) and pseudo elements(::first-line, ::first-letter, ::selection, ::before, ::after). 
         
+    *   \ **ui**\ =\ *uiSpecifierString*:
+        Locate an element by resolving the UI specifier string to another locator, and evaluating it. See the Selenium UI-Element Reference for more details.
+        
+        *   ui=loginPages::loginButton()
+        *   ui=settingsPages::toggle(label=Hide Email)
+        *   ui=forumPages::postBody(index=2)//a[2]
+        
+        
     
     
     
@@ -172,9 +180,13 @@ class selenium:
         self.browserStartCommand = browserStartCommand
         self.browserURL = browserURL
         self.sessionId = None
+        self.extensionJs = ""
 
+    def setExtensionJs(self, extensionJs):
+        self.extensionJs = extensionJs
+        
     def start(self):
-        result = self.get_string("getNewBrowserSession", [self.browserStartCommand, self.browserURL])
+        result = self.get_string("getNewBrowserSession", [self.browserStartCommand, self.browserURL, self.extensionJs])
         try:
             self.sessionId = result
         except ValueError:
@@ -186,12 +198,13 @@ class selenium:
 
     def do_command(self, verb, args):
         conn = httplib.HTTPConnection(self.host, self.port)
-        commandString = u'/selenium-server/driver/?cmd=' + urllib.quote_plus(unicode(verb).encode('utf-8'))
+        body = u'cmd=' + urllib.quote_plus(unicode(verb).encode('utf-8'))
         for i in range(len(args)):
-            commandString = commandString + '&' + unicode(i+1) + '=' + urllib.quote_plus(unicode(args[i]).encode('utf-8'))
+            body += '&' + unicode(i+1) + '=' + urllib.quote_plus(unicode(args[i]).encode('utf-8'))
         if (None != self.sessionId):
-            commandString = commandString + "&sessionId=" + unicode(self.sessionId)
-        conn.request("GET", commandString)
+            body += "&sessionId=" + unicode(self.sessionId)
+        headers = {"Content-Type": "application/x-www-form-urlencoded; charset=utf-8"}
+        conn.request("POST", "/selenium-server/driver/", body, headers)
     
         response = conn.getresponse()
         #print response.status, response.reason
@@ -459,7 +472,7 @@ class selenium:
 
     def mouse_down(self,locator):
         """
-        Simulates a user pressing the mouse button (without releasing it yet) on
+        Simulates a user pressing the left mouse button (without releasing it yet) on
         the specified element.
         
         'locator' is an element locator
@@ -467,15 +480,36 @@ class selenium:
         self.do_command("mouseDown", [locator,])
 
 
+    def mouse_down_right(self,locator):
+        """
+        Simulates a user pressing the right mouse button (without releasing it yet) on
+        the specified element.
+        
+        'locator' is an element locator
+        """
+        self.do_command("mouseDownRight", [locator,])
+
+
     def mouse_down_at(self,locator,coordString):
         """
-        Simulates a user pressing the mouse button (without releasing it yet) at
+        Simulates a user pressing the left mouse button (without releasing it yet) at
         the specified location.
         
         'locator' is an element locator
         'coordString' is specifies the x,y position (i.e. - 10,20) of the mouse      event relative to the element returned by the locator.
         """
         self.do_command("mouseDownAt", [locator,coordString,])
+
+
+    def mouse_down_right_at(self,locator,coordString):
+        """
+        Simulates a user pressing the right mouse button (without releasing it yet) at
+        the specified location.
+        
+        'locator' is an element locator
+        'coordString' is specifies the x,y position (i.e. - 10,20) of the mouse      event relative to the element returned by the locator.
+        """
+        self.do_command("mouseDownRightAt", [locator,coordString,])
 
 
     def mouse_up(self,locator):
@@ -488,6 +522,16 @@ class selenium:
         self.do_command("mouseUp", [locator,])
 
 
+    def mouse_up_right(self,locator):
+        """
+        Simulates the event that occurs when the user releases the right mouse button (i.e., stops
+        holding the button down) on the specified element.
+        
+        'locator' is an element locator
+        """
+        self.do_command("mouseUpRight", [locator,])
+
+
     def mouse_up_at(self,locator,coordString):
         """
         Simulates the event that occurs when the user releases the mouse button (i.e., stops
@@ -497,6 +541,17 @@ class selenium:
         'coordString' is specifies the x,y position (i.e. - 10,20) of the mouse      event relative to the element returned by the locator.
         """
         self.do_command("mouseUpAt", [locator,coordString,])
+
+
+    def mouse_up_right_at(self,locator,coordString):
+        """
+        Simulates the event that occurs when the user releases the right mouse button (i.e., stops
+        holding the button down) at the specified location.
+        
+        'locator' is an element locator
+        'coordString' is specifies the x,y position (i.e. - 10,20) of the mouse      event relative to the element returned by the locator.
+        """
+        self.do_command("mouseUpRightAt", [locator,coordString,])
 
 
     def mouse_move(self,locator):
@@ -852,6 +907,8 @@ class selenium:
 
     def choose_cancel_on_next_confirmation(self):
         """
+        
+        
         By default, Selenium's overridden window.confirm() function will
         return true, as if the user had manually clicked OK; after running
         this command, the next call to confirm() will return false, as if
@@ -860,12 +917,22 @@ class selenium:
         true (OK) unless/until you explicitly call this command for each
         confirmation.
         
+        
+        
+        Take note - every time a confirmation comes up, you must
+        consume it with a corresponding getConfirmation, or else
+        the next selenium operation will fail.
+        
+        
+        
         """
         self.do_command("chooseCancelOnNextConfirmation", [])
 
 
     def choose_ok_on_next_confirmation(self):
         """
+        
+        
         Undo the effect of calling chooseCancelOnNextConfirmation.  Note
         that Selenium's overridden window.confirm() function will normally automatically
         return true, as if the user had manually clicked OK, so you shouldn't
@@ -874,6 +941,14 @@ class selenium:
         default behavior for future confirmations, automatically returning 
         true (OK) unless/until you explicitly call chooseCancelOnNextConfirmation for each
         confirmation.
+        
+        
+        
+        Take note - every time a confirmation comes up, you must
+        consume it with a corresponding getConfirmation, or else
+        the next selenium operation will fail.
+        
+        
         
         """
         self.do_command("chooseOkOnNextConfirmation", [])
@@ -962,13 +1037,13 @@ class selenium:
         
         
         Getting an alert has the same effect as manually clicking OK. If an
-        alert is generated but you do not get/verify it, the next Selenium action
+        alert is generated but you do not consume it with getAlert, the next Selenium action
         will fail.
         
-        NOTE: under Selenium, JavaScript alerts will NOT pop up a visible alert
+        Under Selenium, JavaScript alerts will NOT pop up a visible alert
         dialog.
         
-        NOTE: Selenium does NOT support JavaScript alerts that are generated in a
+        Selenium does NOT support JavaScript alerts that are generated in a
         page's onload() event handler. In this case a visible dialog WILL be
         generated and Selenium will hang until someone manually clicks OK.
         
@@ -986,8 +1061,12 @@ class selenium:
         
         By default, the confirm function will return true, having the same effect
         as manually clicking OK. This can be changed by prior execution of the
-        chooseCancelOnNextConfirmation command. If an confirmation is generated
-        but you do not get/verify it, the next Selenium action will fail.
+        chooseCancelOnNextConfirmation command. 
+        
+        
+        
+        If an confirmation is generated but you do not consume it with getConfirmation,
+        the next Selenium action will fail.
         
         
         
@@ -1751,19 +1830,78 @@ class selenium:
         self.do_command("addLocationStrategy", [strategyName,functionDefinition,])
 
 
-    def capture_entire_page_screenshot(self,filename):
+    def capture_entire_page_screenshot(self,filename,kwargs):
         """
         Saves the entire contents of the current window canvas to a PNG file.
-        Currently this only works in Mozilla and when running in chrome mode.
         Contrast this with the captureScreenshot command, which captures the
         contents of the OS viewport (i.e. whatever is currently being displayed
-        on the monitor), and is implemented in the RC only. Implementation
-        mostly borrowed from the Screengrab! Firefox extension. Please see
-        http://www.screengrab.org for details.
+        on the monitor), and is implemented in the RC only. Currently this only
+        works in Firefox when running in chrome mode, and in IE non-HTA using
+        the EXPERIMENTAL "Snapsie" utility. The Firefox implementation is mostly
+        borrowed from the Screengrab! Firefox extension. Please see
+        http://www.screengrab.org and http://snapsie.sourceforge.net/ for
+        details.
         
         'filename' is the path to the file to persist the screenshot as. No                  filename extension will be appended by default.                  Directories will not be created if they do not exist,                    and an exception will be thrown, possibly by native                  code.
+        'kwargs' is a kwargs string that modifies the way the screenshot                  is captured. Example: "background=#CCFFDD" .                  Currently valid options:                  
+        *    background
+            the background CSS for the HTML document. This                     may be useful to set for capturing screenshots of                     less-than-ideal layouts, for example where absolute                     positioning causes the calculation of the canvas                     dimension to fail and a black background is exposed                     (possibly obscuring black text).
+        
+        
         """
-        self.do_command("captureEntirePageScreenshot", [filename,])
+        self.do_command("captureEntirePageScreenshot", [filename,kwargs,])
+
+
+    def rollup(self,rollupName,kwargs):
+        """
+        Executes a command rollup, which is a series of commands with a unique
+        name, and optionally arguments that control the generation of the set of
+        commands. If any one of the rolled-up commands fails, the rollup is
+        considered to have failed. Rollups may also contain nested rollups.
+        
+        'rollupName' is the name of the rollup command
+        'kwargs' is keyword arguments string that influences how the                    rollup expands into commands
+        """
+        self.do_command("rollup", [rollupName,kwargs,])
+
+
+    def add_script(self,scriptContent,scriptTagId):
+        """
+        Loads script content into a new script tag in the Selenium document. This
+        differs from the runScript command in that runScript adds the script tag
+        to the document of the AUT, not the Selenium document. The following
+        entities in the script content are replaced by the characters they
+        represent:
+        
+            &lt;
+            &gt;
+            &amp;
+        
+        The corresponding remove command is removeScript.
+        
+        'scriptContent' is the Javascript content of the script to add
+        'scriptTagId' is (optional) the id of the new script tag. If                       specified, and an element with this id already                       exists, this operation will fail.
+        """
+        self.do_command("addScript", [scriptContent,scriptTagId,])
+
+
+    def remove_script(self,scriptTagId):
+        """
+        Removes a script tag from the Selenium document identified by the given
+        id. Does nothing if the referenced tag doesn't exist.
+        
+        'scriptTagId' is the id of the script element to remove.
+        """
+        self.do_command("removeScript", [scriptTagId,])
+
+
+    def use_xpath_library(self,libraryName):
+        """
+        Allows choice of one of the available libraries.
+        
+        'libraryName' is name of the desired library Only the following three can be chosen:   ajaxslt - Google's library   javascript - Cybozu Labs' faster library   default - The default library.  Currently the default library is ajaxslt. If libraryName isn't one of these three, then  no change will be made.
+        """
+        self.do_command("useXpathLibrary", [libraryName,])
 
 
     def set_context(self,context):
@@ -1795,6 +1933,27 @@ class selenium:
         self.do_command("captureScreenshot", [filename,])
 
 
+    def capture_screenshot_to_string(self):
+        """
+        Capture a PNG screenshot.  It then returns the file as a base 64 encoded string.
+        
+        """
+        return self.get_string("captureScreenshotToString", [])
+
+
+    def capture_entire_page_screenshot_to_string(self,kwargs):
+        """
+        Downloads a screenshot of the browser current window canvas to a 
+        based 64 encoded PNG file. The \ *entire* windows canvas is captured,
+        including parts rendered outside of the current view port.
+        
+        Currently this only works in Mozilla and when running in chrome mode.
+        
+        'kwargs' is A kwargs string that modifies the way the screenshot is captured. Example: "background=#CCFFDD". This may be useful to set for capturing screenshots of less-than-ideal layouts, for example where absolute positioning causes the calculation of the canvas dimension to fail and a black background is exposed  (possibly obscuring black text).
+        """
+        return self.get_string("captureEntirePageScreenshotToString", [kwargs,])
+
+
     def shut_down_selenium_server(self):
         """
         Kills the running Selenium Server and all browser sessions.  After you run this command, you will no longer be able to send
@@ -1804,6 +1963,16 @@ class selenium:
         
         """
         self.do_command("shutDownSeleniumServer", [])
+
+
+    def retrieve_last_remote_control_logs(self):
+        """
+        Retrieve the last messages logged on a specific remote control. Useful for error reports, especially
+        when running multiple remote controls in a distributed environment. The maximum number of log messages
+        that can be retrieve is configured on remote control startup.
+        
+        """
+        return self.get_string("retrieveLastRemoteControlLogs", [])
 
 
     def key_down_native(self,keycode):
