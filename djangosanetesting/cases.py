@@ -32,13 +32,6 @@ class UnitTestCase(SaneTestCase):
     and thus not need any special treatment.
     """
     
-class HttpTestCase(SaneTestCase):
-    start_live_server = True
-    """
-    If it is not running, our plugin should start HTTP server
-    so we can use it with urllib2 or some webtester.
-    """
-
 class DatabaseTestCase(SaneTestCase):
     """
     Tests using database for models in simple: rollback on teardown and we're out.
@@ -55,3 +48,9 @@ class DestructiveDatabaseTestCase(DatabaseTestCase):
     database_single_transaction = True
     database_flush = True
 
+class HttpTestCase(DestructiveDatabaseTestCase):
+    start_live_server = True
+    """
+    If it is not running, our plugin should start HTTP server
+    so we can use it with urllib2 or some webtester.
+    """
