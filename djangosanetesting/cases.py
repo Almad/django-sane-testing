@@ -9,6 +9,7 @@ class SaneTestCase(object):
     start_live_server = False
     database_single_transaction = False
     database_flush = False
+    selenium_start = False
     
     def setUp(self):
         pass
@@ -49,8 +50,21 @@ class DestructiveDatabaseTestCase(DatabaseTestCase):
     database_flush = True
 
 class HttpTestCase(DestructiveDatabaseTestCase):
-    start_live_server = True
     """
     If it is not running, our plugin should start HTTP server
     so we can use it with urllib2 or some webtester.
     """
+    start_live_server = True
+
+class SeleniumTestCase(HttpTestCase):
+    """
+    Connect to selenium RC and provide it as instance attribute.
+    Configuration in settings:
+      * SELENIUM_HOST (default to localhost)
+      * SELENIUM_PORT (default to 4444)
+      * SELENIUM_BROWSER_COMMAND (default to *opera)
+      * SELENIUM_URL_ROOT (default to URL_ROOT default to /)
+    """
+    selenium_start = True
+    start_live_server = True
+

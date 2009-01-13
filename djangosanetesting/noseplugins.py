@@ -12,9 +12,10 @@ import nose
 from nose import SkipTest
 from nose.plugins import Plugin
 
-from cases import HttpTestCase, DatabaseTestCase, DestructiveDatabaseTestCase
+from djangosanetesting.cases import HttpTestCase, DatabaseTestCase, DestructiveDatabaseTestCase
+from djangosanetesting.selenium.driver import selenium
 
-__all__ = ("LiveHttpServerRunnerPlugin", "DjangoPlugin",)
+__all__ = ("LiveHttpServerRunnerPlugin", "DjangoPlugin", "SeleniumPlugin",)
 
 def flush_database(case):
     from django.test.testcases import call_command
@@ -41,6 +42,7 @@ def get_test_case_class(nose_test):
         return nose_test.test.test.im_class
     else:
         return nose_test.test.__class__
+
 
 class StoppableWSGIServer(basehttp.WSGIServer):
     """WSGIServer with short timeout, so that server thread can stop this server."""
@@ -208,4 +210,54 @@ class DjangoPlugin(Plugin):
             transaction.leave_transaction_management()
 
         flush_urlconf(self)
+
+class SeleniumPlugin(Plugin):
+    """
+    For testcases with selenium_start set to True, connect to Selenium RC.
+    """
+    activation_parameter = '--with-selenium'
+    name = 'selenium'
+    
+    score = 120
+    
+    def options(self, parser, env=os.environ):
+        Plugin.options(self, parser, env)
+
+    def configure(self, options, config):
+        Plugin.configure(self, options, config)
+
+    def startTest(self, test):
+        """
+        When preparing test, check whether to make our database fresh
+        """
+
+        from django.conf import settings
+        
+        test_case = get_test_case_class(test)
+        if getattr(test_case, "selenium_start", False):
+            sel = selenium(
+                      getattr(settings, "SELENIUM_HOST", 'localhost'),
+                      int(getattr(settings, "SELENIUM_PORT", 4444)),
+                      getattr(settings, "SELENIUM_BROWSER_COMMAND", '*opera'),
+                      getattr(settings, "SELENIUM_URL_ROOT", getattr(settings, "URL_ROOT", "/")),
+                  ) 
+            try:
+                sel.start()
+            except Exception, err:
+                # we must catch it all as there is untyped socket exception on Windows :-]]]
+                if getattr(settings, "FORCE_SELENIUM_TESTS", False):
+                    raise
+                else:
+                    raise SkipTest(err)
+            else:
+                if isinstance(test.test, nose.case.MethodTestCase):
+                    test.test.test.im_self.selenium = sel
+                else:
+                    raise SkipTest("I can only assign selenium to TestCase instance; argument passing will be implemented later")
+    
+    def stopTest(self, test):
+        test_case = get_test_case_class(test)
+        if getattr(test_case, "selenium_start", False):
+            test.test.test.im_self.selenium.stop()
+            test.test.test.im_self.selenium = None
 

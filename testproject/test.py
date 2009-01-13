@@ -1,6 +1,6 @@
 import urllib2
 
-from djangosanetesting.cases import HttpTestCase, UnitTestCase, DatabaseTestCase
+from djangosanetesting.cases import HttpTestCase, UnitTestCase, DatabaseTestCase, SeleniumTestCase
 
 from testapp.models import ExampleModel
 
@@ -50,3 +50,10 @@ class TestDatabaseRollbackCase(DatabaseTestCase):
 
         # check we got stored properly
         self.assert_equals(2, len(ExampleModel.objects.all()))
+
+class TestSeleniumWorks(SeleniumTestCase):
+    def test_ok(self):
+        self.selenium.open("/testtwohundred/")
+        self.selenium.is_text_present("200 OK")
+
+        
