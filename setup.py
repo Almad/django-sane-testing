@@ -19,7 +19,7 @@ setup(
     author = 'Lukas Linhart',
     author_email = 'bugs@almad.net',
     description = 'Support sane testing in django using nose.',
-    packages = ['djangosanetesting'],
+    packages = ['djangosanetesting', 'djangosanetesting.selenium'],
     scripts = [],
     classifiers=[
         "Development Status :: 4 - Beta",
