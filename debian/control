@@ -1,0 +1,13 @@
+Source: django-sane-testing
+Section: devel
+Priority: optional
+Maintainer: Lukas Linhart <bugs@almad.net>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+Homepage: http://devel.almad.net/trac/django-sane-testing
+
+Package: django-sane-testing
+Architecture: any
+Depends: python (> 2.4), python-nose (>= 0.10.0)
+Description: Tools for sane testing with Django 
+ Set of tools to allow TDD and testing with Django framework.

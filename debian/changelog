@@ -1,0 +1,12 @@
+django-sane-testing (0.1.0-2) unstable; urgency=low
+
+  * Initial version for 0.1.0
+
+ -- Lukas Linhart <bugs@almad.net>  Tue, 13 Jan 2009 11:00:49 +0100
+
+django-sane-testing (0.1.0-1) unstable; urgency=low
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- Lukas Linhart <bugs@almad.net>  Mon, 12 Jan 2009 15:45:19 +0100
+
