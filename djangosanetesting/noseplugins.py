@@ -25,7 +25,7 @@ def flush_database(case):
     if hasattr(case, 'fixtures'):
         # We have to use this slightly awkward syntax due to the fact
         # that we're using *args and **kwargs together.
-        call_command('loaddata', *self.fixtures, **{'verbosity': 0})
+        call_command('loaddata', *case.fixtures, **{'verbosity': 0})
     if hasattr(case, 'urls'):
         case._old_root_urlconf = settings.ROOT_URLCONF
         settings.ROOT_URLCONF = case.urls
@@ -195,7 +195,7 @@ class DjangoPlugin(Plugin):
             transaction.managed(True)
         
         if (hasattr(test_case, "database_flush") and test_case.database_flush is True):
-            flush_database(self)
+            flush_database(test_case)
 
     def stopTest(self, test):
         """

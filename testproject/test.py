@@ -1,6 +1,6 @@
 import urllib2
 
-from djangosanetesting.cases import HttpTestCase, UnitTestCase, DatabaseTestCase, SeleniumTestCase
+from djangosanetesting.cases import HttpTestCase, UnitTestCase, DatabaseTestCase, SeleniumTestCase, DestructiveDatabaseTestCase
 
 from testapp.models import ExampleModel
 
@@ -56,4 +56,8 @@ class TestSeleniumWorks(SeleniumTestCase):
         self.selenium.open("/testtwohundred/")
         self.selenium.is_text_present("200 OK")
 
-        
+class TestFixturesLoadedProperly(DestructiveDatabaseTestCase):
+    fixtures = ["random_model_for_testing"]
+    
+    def test_model_loaded(self):
+        self.assert_equals(2, len(ExampleModel.objects.all()))
