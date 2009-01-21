@@ -1,5 +1,7 @@
 from djangosanetesting.cases import UnitTestCase
 
+from testapp.models import ExampleModel
+
 class TestUnitSimpleMetods(UnitTestCase):
     def test_true(self):
         self.assert_true(True)
@@ -59,4 +61,22 @@ class TestUnitAliases(UnitTestCase):
         self.assert_raises(ValueError, lambda:self.get_camel("_prefix"))
 
 class TestProperClashing(UnitTestCase):
-    """ TODO: test we're getting expected failures when working with db"""
+    """
+    Test we're getting expected failures when working with db,
+    i.e. that database is not purged between tests.
+    We rely that test suite executed methods in this order:
+      (1) test_aaa_inserting_two
+      (2) test_bbb_inserting_another_two
+      
+    This is antipattern and should not be used, but it's hard to test
+    framework from within ;) Better solution would be greatly appreciated.  
+    """
+    
+    def test_aaa_inserting_two(self):
+        ExampleModel.objects.create(name="test1")
+        self.assert_equals(1, len(ExampleModel.objects.all()))
+
+    def test_bbb_inserting_another_two(self):
+        ExampleModel.objects.create(name="test2")
+        self.assert_equals(2, len(ExampleModel.objects.all()))
+
