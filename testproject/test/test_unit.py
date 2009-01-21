@@ -1,26 +1,37 @@
 from djangosanetesting.cases import UnitTestCase
 
-class TestUnit(UnitTestCase):
-    def test_simple_assert_methods_true(self):
+class TestUnitSimpleMetods(UnitTestCase):
+    def test_true(self):
         self.assert_true(True)
-        # existence of alias
-        self.assertTrue(True)
-        assert self.assert_true == self.assertTrue
     
-    def test_simple_assert_methods_true_false(self):
+    def test_true_false(self):
         self.assert_raises(AssertionError, lambda:self.assert_true(False))
     
-    def test_simple_assert_methods_raises(self):
-        pass
-#        self.assert_raises(True)
-#        self.assertTrue(True)
+    def raise_value_error(self):
+        # lambda cannot do it, fix Python
+        raise ValueError()
+    
+    def test_raises(self):
+        self.assert_true(True, self.assert_raises(ValueError, lambda:self.raise_value_error()))
+    
+    def test_raises_raise_assertion(self):
+        self.assert_raises(AssertionError, lambda: self.assert_raises(ValueError, lambda: "a"))
+    
+    def test_equals(self):
+        self.assert_equals(1, 1)
+
+    def test_equals_false(self):
+        self.assert_raises(AssertionError, lambda:self.assert_equals(1, 2))
 
 class TestUnitAliases(UnitTestCase):
     
     def get_camel(self, name):
+        """ Transform under_score_names to underScoreNames """
         if name.startswith("_") or name.endswith("_"):
             raise ValueError(u"Cannot ransform to CamelCase world when name begins or ends with _")
+        
         camel = list(name)
+        
         while "_" in camel:
             index = camel.index("_")
             del camel[index]
