@@ -150,6 +150,7 @@ class DjangoPlugin(Plugin):
         self.old_name = settings.DATABASE_NAME
         
         connection.creation.create_test_db(verbosity=False, autoclobber=True)
+        self.need_flush = False
     
     def finalize(self, *args, **kwargs):
         """
@@ -172,6 +173,7 @@ class DjangoPlugin(Plugin):
         from django.core import mail
         
         test_case = get_test_case_class(test)
+        self.previous_test_needed_flush = self.need_flush
         mail.outbox = []
         
         # clear URLs if needed
@@ -183,7 +185,17 @@ class DjangoPlugin(Plugin):
         if (hasattr(test_case, "database_flush") and test_case.database_flush is True):
             call_command('flush', verbosity=0, interactive=False)
             # it's possible that some garbage will be left
-            self.previous_case_needed_flush = True  
+            self.need_flush = True
+            self.flushed = False
+        # previous test needed flush
+        elif self.previous_test_needed_flush is True:
+            call_command('flush', verbosity=0, interactive=False)
+            self.need_flush = False
+            self.flushed = True
+        else:
+            self.need_flush = True
+            self.flushed = True
+            
         
         if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
             transaction.enter_transaction_management()
@@ -194,7 +206,11 @@ class DjangoPlugin(Plugin):
         if hasattr(test_case, 'fixtures'):
             # We have to use this slightly awkward syntax due to the fact
             # that we're using *args and **kwargs together.
-            call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : False})
+            if self.need_flush:
+                commit = True
+            else:
+                commit = False
+            call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : commit})
 
         
     def stopTest(self, test):
