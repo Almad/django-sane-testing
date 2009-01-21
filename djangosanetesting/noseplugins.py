@@ -17,21 +17,6 @@ from djangosanetesting.selenium.driver import selenium
 
 __all__ = ("LiveHttpServerRunnerPlugin", "DjangoPlugin", "SeleniumPlugin",)
 
-def flush_database(case):
-    from django.test.testcases import call_command
-    from django.core import mail
-    # there is a need for check if fixtures were involved (= same fixture?)
-    call_command('flush', verbosity=0, interactive=False)
-    if hasattr(case, 'fixtures'):
-        # We have to use this slightly awkward syntax due to the fact
-        # that we're using *args and **kwargs together.
-        call_command('loaddata', *case.fixtures, **{'verbosity': 0})
-    if hasattr(case, 'urls'):
-        case._old_root_urlconf = settings.ROOT_URLCONF
-        settings.ROOT_URLCONF = case.urls
-        clear_url_caches()
-    mail.outbox = []
-    
 def flush_urlconf(case):
     if hasattr(case, '_old_root_urlconf'):
         settings.ROOT_URLCONF = case._old_root_urlconf
@@ -183,20 +168,35 @@ class DjangoPlugin(Plugin):
         When preparing test, check whether to make our database fresh
         """
         from django.db import transaction
+        from django.test.testcases import call_command
+        from django.core import mail
         
-        from cases import DatabaseTestCase
-        
-        # this only works for methods and is strange, I know
-        # report if you have better idea how to access original testcase instance
         test_case = get_test_case_class(test)
+        mail.outbox = []
+        
+        # clear URLs if needed
+        if hasattr(test_case, 'urls'):
+            test_case._old_root_urlconf = settings.ROOT_URLCONF
+            settings.ROOT_URLCONF = test_case.urls
+            clear_url_caches()
+
+        if (hasattr(test_case, "database_flush") and test_case.database_flush is True):
+            call_command('flush', verbosity=0, interactive=False)
+            # it's possible that some garbage will be left
+            self.previous_case_needed_flush = True  
         
         if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
             transaction.enter_transaction_management()
             transaction.managed(True)
         
-        if (hasattr(test_case, "database_flush") and test_case.database_flush is True):
-            flush_database(test_case)
+        # fixtures are loaded inside transaction, thus we don't need to flush
+        # between database_single_transaction tests when their fixtures differ
+        if hasattr(test_case, 'fixtures'):
+            # We have to use this slightly awkward syntax due to the fact
+            # that we're using *args and **kwargs together.
+            call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : False})
 
+        
     def stopTest(self, test):
         """
         After test is run, clear urlconf and caches

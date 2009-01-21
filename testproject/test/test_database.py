@@ -30,3 +30,4 @@ class TestFixturesLoadedProperly(DestructiveDatabaseTestCase):
     
     def test_model_loaded(self):
         self.assert_equals(2, len(ExampleModel.objects.all()))
+
