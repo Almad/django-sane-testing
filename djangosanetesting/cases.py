@@ -96,7 +96,11 @@ class HttpTestCase(DestructiveDatabaseTestCase):
             self._django_client = Client()
         return self._django_client
     
-    client = property(fget=get_django_client)
+    def set_django_client(self, value):
+        self._django_client = value
+    
+    client = property(fget=get_django_client, fset=set_django_client)
+    
 class SeleniumTestCase(HttpTestCase):
     """
     Connect to selenium RC and provide it as instance attribute.
