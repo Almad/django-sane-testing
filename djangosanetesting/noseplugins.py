@@ -28,6 +28,9 @@ def get_test_case_class(nose_test):
     else:
         return nose_test.test.__class__
 
+def enable_test(test_case, plugin_attribute):
+    if not getattr(test_case, plugin_attribute, False):
+        setattr(test_case, plugin_attribute, True)
 
 class StoppableWSGIServer(basehttp.WSGIServer):
     """WSGIServer with short timeout, so that server thread can stop this server."""
@@ -168,6 +171,10 @@ class DjangoPlugin(Plugin):
         """
         When preparing test, check whether to make our database fresh
         """
+        #####
+        ### FIXME: Method is a bit ugly, would be nice to refactor if's to methods
+        #####
+        
         from django.db import transaction
         from django.test.testcases import call_command
         from django.core import mail
@@ -175,6 +182,8 @@ class DjangoPlugin(Plugin):
         test_case = get_test_case_class(test)
         self.previous_test_needed_flush = self.need_flush
         mail.outbox = []
+        
+        enable_test(test_case, 'django_plugin_started')
         
         # clear URLs if needed
         if hasattr(test_case, 'urls'):
@@ -187,6 +196,7 @@ class DjangoPlugin(Plugin):
             # it's possible that some garbage will be left
             self.need_flush = True
             self.flushed = False
+            
         # previous test needed flush
         elif self.previous_test_needed_flush is True:
             call_command('flush', verbosity=0, interactive=False)
@@ -250,6 +260,10 @@ class SeleniumPlugin(Plugin):
         from django.conf import settings
         
         test_case = get_test_case_class(test)
+
+        enable_test(test_case, 'selenium_plugin_started')
+
+        
         if getattr(test_case, "selenium_start", False):
             sel = selenium(
                       getattr(settings, "SELENIUM_HOST", 'localhost'),

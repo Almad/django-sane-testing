@@ -6,6 +6,7 @@ from nose.tools import (
                 assert_true,
                 assert_false,
 )
+from nose import SkipTest
 
 class SaneTestCase(object):
     """ Common ancestor we're using our own hierarchy """
@@ -14,8 +15,16 @@ class SaneTestCase(object):
     database_flush = False
     selenium_start = False
     
+    SkipTest = SkipTest
+    
+    def _check_plugins(self):
+        if getattr(self, 'required_sane_plugins', False):
+            for plugin in self.required_sane_plugins:
+                if not getattr(self, "%s_plugin_started", False):
+                    raise self.SkipTest("Plugin %s from django-sane-testing required, skipping")
+    
     def setUp(self):
-        pass
+        self._check_plugins()
     
     def assert_equals(self, *args, **kwargs):
         assert_equals(*args, **kwargs)
@@ -59,6 +68,8 @@ class DatabaseTestCase(SaneTestCase):
     """
     database_single_transaction = True
     database_flush = False
+    required_sane_plugins = ["django"]
+    django_plugin_started = False
     
 class DestructiveDatabaseTestCase(DatabaseTestCase):
     """
@@ -73,6 +84,8 @@ class HttpTestCase(DestructiveDatabaseTestCase):
     so we can use it with urllib2 or some webtester.
     """
     start_live_server = True
+    required_sane_plugins = ["django", "http"]
+    http_plugin_started = False
 
 class SeleniumTestCase(HttpTestCase):
     """
@@ -85,4 +98,6 @@ class SeleniumTestCase(HttpTestCase):
     """
     selenium_start = True
     start_live_server = True
+    required_sane_plugins = ["django", "selenium", "http"]
+    selenium_plugin_started = False
 
