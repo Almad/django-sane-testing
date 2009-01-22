@@ -32,7 +32,7 @@ def get_test_case_instance(nose_test):
     if isinstance(nose_test.test, nose.case.MethodTestCase):
         return nose_test.test.test.im_self
     else:
-        raise ValueError("Instance not available for non-methods")
+        raise None
 
 def enable_test(test_case, plugin_attribute):
     if not getattr(test_case, plugin_attribute, False):
@@ -123,7 +123,8 @@ class LiveHttpServerRunnerPlugin(Plugin):
             self.server_started = True
         enable_test(test_case, 'http_plugin_started')
         # clear test client for test isolation
-        test_instance.client = None
+        if test_instance:
+            test_instance.client = None
         
 
     def start_server(self, address='0.0.0.0', port=8000):
