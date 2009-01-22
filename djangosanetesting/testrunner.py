@@ -15,8 +15,11 @@ def activate_plugin(plugin):
 def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     """ Run tests with nose instead of defualt test runner """
     # we have to strip script name before passing to nose
-#    sys.argv = argv_backup[0:1]
     config = Config(files=all_config_files(), plugins=DefaultPluginManager([LiveHttpServerRunnerPlugin(), DjangoPlugin(), SeleniumPlugin()]))
+    
+    # we've been called in form ./manage.py test. Test is however not a test location,
+    # so strip it so we can get one
+    sys.argv = [sys.argv[0]] + sys.argv[2:] 
     
     # activate all required plugins
     activate_plugin(DjangoPlugin)
