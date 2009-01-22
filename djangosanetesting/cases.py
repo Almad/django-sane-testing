@@ -88,7 +88,15 @@ class HttpTestCase(DestructiveDatabaseTestCase):
     start_live_server = True
     required_sane_plugins = ["django", "http"]
     http_plugin_started = False
-
+    
+    
+    def get_django_client(self):
+        from django.test import Client
+        if not getattr(self, '_django_client', False):
+            self._django_client = Client()
+        return self._django_client
+    
+    client = property(fget=get_django_client)
 class SeleniumTestCase(HttpTestCase):
     """
     Connect to selenium RC and provide it as instance attribute.

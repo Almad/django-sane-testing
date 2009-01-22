@@ -25,7 +25,10 @@ class TestLiveServerRunning(HttpTestCase):
     
     def test_http_retrievable_repeatedly(self):
         return self.get_ok()
-
+    
+    def test_client_available(self):
+        res = self.client.get('/testtwohundred/')
+        self.assert_equals(200, res.status_code)
 
 class TestSeleniumWorks(SeleniumTestCase):
     def test_ok(self):
