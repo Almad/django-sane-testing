@@ -32,7 +32,7 @@ def get_test_case_instance(nose_test):
     if isinstance(nose_test.test, nose.case.MethodTestCase):
         return nose_test.test.test.im_self
     else:
-        raise None
+        return None
 
 def enable_test(test_case, plugin_attribute):
     if not getattr(test_case, plugin_attribute, False):

@@ -80,3 +80,6 @@ class TestProperClashing(UnitTestCase):
         ExampleModel.objects.create(name="test2")
         self.assert_equals(2, len(ExampleModel.objects.all()))
 
+def function_test():
+    # just to verify we work with them
+    assert True is True
