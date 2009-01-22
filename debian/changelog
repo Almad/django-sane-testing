@@ -1,3 +1,9 @@
+django-sane-testing (0.3.1) unstable; urgency=low
+
+  * Fixed bad non-method-cases handling 
+
+ -- Lukas Linhart <almad@cnt-ella-dev.dev.chservices.cz>  Thu, 22 Jan 2009 15:22:58 +0100
+
 django-sane-testing (0.3.0) unstable; urgency=low
 
   * Django's client available for !HttpTestCase

@@ -8,6 +8,6 @@ Homepage: http://devel.almad.net/trac/django-sane-testing
 
 Package: django-sane-testing
 Architecture: all
-Depends: python (> 2.4), python-nose (>= 0.10.0)
+Depends: python (>= 2.4), python-nose (>= 0.10.0)
 Description: Tools for sane testing with Django 
  Set of tools to allow TDD and testing with Django framework.
