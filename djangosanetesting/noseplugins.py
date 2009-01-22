@@ -191,7 +191,16 @@ class DjangoPlugin(Plugin):
             test_case._old_root_urlconf = settings.ROOT_URLCONF
             settings.ROOT_URLCONF = test_case.urls
             clear_url_caches()
-
+        
+        #####
+        ### Database handling follows
+        #####
+        
+        if getattr(test_case, 'no_database_interaction', False):
+            # for true unittests, we can leave database handling for later,
+            # as unittests by definition do not interacts
+            return
+        
         if (hasattr(test_case, "database_flush") and test_case.database_flush is True):
             call_command('flush', verbosity=0, interactive=False)
             # it's possible that some garbage will be left

@@ -14,6 +14,7 @@ class SaneTestCase(object):
     database_single_transaction = False
     database_flush = False
     selenium_start = False
+    no_database_interaction = False
     
     SkipTest = SkipTest
     
@@ -59,6 +60,7 @@ class UnitTestCase(SaneTestCase):
     This class is a unittest, i.e. do not interact with database et al
     and thus not need any special treatment.
     """
+    no_database_interaction = True
     
 class DatabaseTestCase(SaneTestCase):
     """
