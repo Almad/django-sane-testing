@@ -1,8 +1,19 @@
+django-sane-testing (0.3.0) unstable; urgency=low
+
+  * Django's client available for !HttpTestCase
+  * Proper handling of ./manage.py test
+  * Tests skip themselves if they rely on plugin that is not loaded
+  * No Database care when running true unit tests whatsoever
+  * ...and few fixes
+ 
+
+ -- Lukas Linhart <almad@cnt-ella-dev.dev.chservices.cz>  Thu, 22 Jan 2009 13:53:11 +0100
+
 django-sane-testing (0.2.0) unstable; urgency=low
 
-  * Support for Selenium 
+  * Support for Selenium
 
- -- Lukas Linhart <almad@cnt-ella-dev.dev.chservices.cz>  Thu, 15 Jan 2009 15:14:22 +0100
+ -- Lukas Linhart <almad@cnt-ella-dev.dev.chservices.cz>  Mon, 19 Jan 2009 18:22:10 +0100
 
 django-sane-testing (0.1.0-2) unstable; urgency=low
 
