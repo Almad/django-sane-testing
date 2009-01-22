@@ -20,8 +20,8 @@ class SaneTestCase(object):
     def _check_plugins(self):
         if getattr(self, 'required_sane_plugins', False):
             for plugin in self.required_sane_plugins:
-                if not getattr(self, "%s_plugin_started", False):
-                    raise self.SkipTest("Plugin %s from django-sane-testing required, skipping")
+                if not getattr(self, "%s_plugin_started" % plugin, False):
+                    raise self.SkipTest("Plugin %s from django-sane-testing required, skipping" % plugin)
     
     def setUp(self):
         self._check_plugins()

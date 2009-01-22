@@ -110,10 +110,11 @@ class LiveHttpServerRunnerPlugin(Plugin):
         Plugin.configure(self, options, config)
         
     def startTest(self, test):
-        cls = get_test_case_class(test)
-        if not self.server_started and (issubclass(cls, HttpTestCase) or (hasattr(cls, "start_live_server") and cls.start_live_server)):
+        test_case = get_test_case_class(test)
+        if not self.server_started and (issubclass(test_case, HttpTestCase) or (hasattr(test_case, "start_live_server") and test_case.start_live_server)):
             self.start_server()
             self.server_started = True
+        enable_test(test_case, 'http_plugin_started')
 
     def start_server(self, address='0.0.0.0', port=8000):
         self.server_thread = TestServerThread(address, port)
