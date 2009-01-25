@@ -6,9 +6,10 @@ import threading
 import os
 from BaseHTTPServer import HTTPServer
 from SocketServer import ThreadingMixIn
+from time import sleep
 
 from django.core.handlers.wsgi import WSGIHandler
-from django.core.servers import basehttp
+from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
 
 import nose
 from nose import SkipTest
@@ -106,13 +107,13 @@ class TestServerThread(threading.Thread):
     def run(self):
         """Sets up test server and loops over handling http requests."""
         try:
-            handler = basehttp.AdminMediaHandler(WSGIHandler())
+            handler = AdminMediaHandler(WSGIHandler())
             server_address = (self.address, self.port)
-            httpd = StoppableWSGIServer(server_address, basehttp.WSGIRequestHandler)
+            httpd = StoppableWSGIServer(server_address, WSGIRequestHandler)
             #httpd = basehttp.WSGIServer(server_address, basehttp.WSGIRequestHandler)
             httpd.set_app(handler)
             self.started.set()
-        except basehttp.WSGIServerException, e:
+        except WSGIServerException, e:
             self.error = e
             self.started.set()
             return
@@ -132,21 +133,12 @@ class TestServerThread(threading.Thread):
         self._stopevent.set()
         threading.Thread.join(self, timeout)
 
-class LiveHttpServerRunnerPlugin(Plugin):
-    """
-    Patch Django on fly and start live HTTP server, if TestCase is inherited
-    from HttpTestCase or start_live_server attribute is set to True.
-    
-    Taken from Michael Rogers implementation from http://trac.getwindmill.com/browser/trunk/windmill/authoring/djangotest.py
-    """
-    name = 'djangoliveserver'
-    activation_parameter = '--with-djangoliveserver'
-    
+class AbstractLiveServerPlugin(Plugin):
     def __init__(self):
-        super(self.__class__, self).__init__()
+        Plugin.__init__(self)
         self.server_started = False
         self.server_thread = None
-        
+
     def options(self, parser, env=os.environ):
         Plugin.options(self, parser, env)
 
@@ -163,10 +155,19 @@ class LiveHttpServerRunnerPlugin(Plugin):
         # clear test client for test isolation
         if test_instance:
             test_instance.client = None
-        
     
-#    def stopTest(self, test):
-#        self.stop_test_server()
+    def finalize(self, result):
+        self.stop_test_server()
+
+class DjangoLiveServerPlugin(AbstractLiveServerPlugin):
+    """
+    Patch Django on fly and start live HTTP server, if TestCase is inherited
+    from HttpTestCase or start_live_server attribute is set to True.
+    
+    Taken from Michael Rogers implementation from http://trac.getwindmill.com/browser/trunk/windmill/authoring/djangotest.py
+    """
+    name = 'djangoliveserver'
+    activation_parameter = '--with-djangoliveserver'
     
     def start_server(self, address='0.0.0.0', port=8000):
         self.server_thread = TestServerThread(address, port)
@@ -174,11 +175,42 @@ class LiveHttpServerRunnerPlugin(Plugin):
         self.server_thread.started.wait()
         if self.server_thread.error:
             raise self.server_thread.error
-
+         
     def stop_test_server(self):
         if self.server_thread:
             self.server_thread.join()
         self.server_started = False
+
+#####
+### It was a nice try with Django server being threaded.
+### It still sucks for some cases (did I mentioned urllib2?),
+### so provide cherrypy as working alternative.
+### Do imports in method to avoid CP as dependency
+### Code originally written by Mikeal Rogers under Apache License.
+#####
+
+class CherryPyLiveServerPlugin(AbstractLiveServerPlugin):
+    name = 'cherrypyliveserver'
+    activation_parameter = '--with-cherrypyliveserver'
+
+    def start_server(self, address='0.0.0.0', port=8000):
+         _application = AdminMediaHandler(WSGIHandler())
+    
+         def application(environ, start_response):
+             environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']
+             return _application(environ, start_response)
+    
+         from cherrypy.wsgiserver import CherryPyWSGIServer
+         from threading import Thread
+         self.httpd = CherryPyWSGIServer((address, port), application, server_name='django-test-http')
+         self.httpd_thread = Thread(target=self.httpd.start)
+         self.httpd_thread.start()
+         #FIXME: This could be avoided by passing self to thread class starting django
+         # and waiting for Event lock
+         sleep(.5)
+    
+    def stop_test_server(self):
+        self.httpd.stop()
 
 class DjangoPlugin(Plugin):
     """
