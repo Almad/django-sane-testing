@@ -4,6 +4,8 @@ Various plugins for nose, that let us do our magic.
 import socket
 import threading
 import os
+from BaseHTTPServer import HTTPServer
+from SocketServer import ThreadingMixIn
 
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers import basehttp
@@ -38,22 +40,57 @@ def enable_test(test_case, plugin_attribute):
     if not getattr(test_case, plugin_attribute, False):
         setattr(test_case, plugin_attribute, True)
 
-class StoppableWSGIServer(basehttp.WSGIServer):
-    """WSGIServer with short timeout, so that server thread can stop this server."""
+#####
+### Okey, this is hack because of #14, or Django's #3357
+### We could runtimely patch basehttp.WSGIServer to inherit from our HTTPServer,
+### but we'd like to have our own modifications anyway, so part of it is cut & paste
+### from basehttp.WSGIServer.
+### Credits & Kudos to Django authors and Rob Hudson et al from #3357
+#####
 
+class StoppableWSGIServer(ThreadingMixIn, HTTPServer):
+    """WSGIServer with short timeout, so that server thread can stop this server."""
+    application = None
+    
+    def __init__(self, server_address, RequestHandlerClass=None):
+        HTTPServer.__init__(self, server_address, RequestHandlerClass) 
+    
     def server_bind(self):
-        """Sets timeout to 1 second."""
-        basehttp.WSGIServer.server_bind(self)
+        """ Bind server to socket. Overrided to store server name & set timeout"""
+        try:
+            HTTPServer.server_bind(self)
+        except Exception, e:
+            raise WSGIServerException, e
+        self.setup_environ()
         self.socket.settimeout(1)
 
     def get_request(self):
         """Checks for timeout when getting request."""
         try:
             sock, address = self.socket.accept()
-            sock.settimeout(None)
+#            sock.settimeout(None)
             return (sock, address)
         except socket.timeout:
             raise
+
+    #####
+    ### Code from basehttp.WSGIServer follows
+    #####
+    def setup_environ(self):
+        # Set up base environment
+        env = self.base_environ = {}
+        env['SERVER_NAME'] = self.server_name
+        env['GATEWAY_INTERFACE'] = 'CGI/1.1'
+        env['SERVER_PORT'] = str(self.server_port)
+        env['REMOTE_HOST']=''
+        env['CONTENT_LENGTH']=''
+        env['SCRIPT_NAME'] = ''
+
+    def get_app(self):
+        return self.application
+
+    def set_app(self,application):
+        self.application = application
 
 class TestServerThread(threading.Thread):
     """Thread for running a http server while tests are running."""
@@ -67,11 +104,12 @@ class TestServerThread(threading.Thread):
         super(TestServerThread, self).__init__()
 
     def run(self):
-        """Sets up test server and database and loops over handling http requests."""
+        """Sets up test server and loops over handling http requests."""
         try:
             handler = basehttp.AdminMediaHandler(WSGIHandler())
             server_address = (self.address, self.port)
             httpd = StoppableWSGIServer(server_address, basehttp.WSGIRequestHandler)
+            #httpd = basehttp.WSGIServer(server_address, basehttp.WSGIRequestHandler)
             httpd.set_app(handler)
             self.started.set()
         except basehttp.WSGIServerException, e:
@@ -79,7 +117,7 @@ class TestServerThread(threading.Thread):
             self.started.set()
             return
 
-        # Must do database stuff in this new thread if database in memory.
+        # When using memory database, complain as we'd use indepenent databases
         from django.conf import settings
         if settings.DATABASE_ENGINE == 'sqlite3' \
             and (not settings.TEST_DATABASE_NAME or settings.TEST_DATABASE_NAME == ':memory:'):
@@ -126,7 +164,10 @@ class LiveHttpServerRunnerPlugin(Plugin):
         if test_instance:
             test_instance.client = None
         
-
+    
+#    def stopTest(self, test):
+#        self.stop_test_server()
+    
     def start_server(self, address='0.0.0.0', port=8000):
         self.server_thread = TestServerThread(address, port)
         self.server_thread.start()
@@ -137,6 +178,7 @@ class LiveHttpServerRunnerPlugin(Plugin):
     def stop_test_server(self):
         if self.server_thread:
             self.server_thread.join()
+        self.server_started = False
 
 class DjangoPlugin(Plugin):
     """
