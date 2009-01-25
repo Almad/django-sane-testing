@@ -18,7 +18,7 @@ from nose.plugins import Plugin
 from djangosanetesting.cases import HttpTestCase, DatabaseTestCase, DestructiveDatabaseTestCase
 from djangosanetesting.selenium.driver import selenium
 
-__all__ = ("LiveHttpServerRunnerPlugin", "DjangoPlugin", "SeleniumPlugin",)
+__all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin",)
 
 def flush_urlconf(case):
     if hasattr(case, '_old_root_urlconf'):

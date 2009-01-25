@@ -6,6 +6,8 @@ import nose
 from nose.config import Config, all_config_files
 from nose.plugins.manager import DefaultPluginManager
 
+__all__ = ("run_tests",)
+
 def activate_plugin(plugin):
     if plugin.activation_parameter not in sys.argv:
         sys.argv.append(plugin.activation_parameter)
