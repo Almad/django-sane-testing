@@ -1,3 +1,10 @@
+django-sane-testing (0.4.0) unstable; urgency=low
+
+  * Django development server is multithreaded now
+  * You can use CherryPy webserver instead of Django one
+
+ -- Lukas Linhart <almad@cnt-ella-dev.dev.chservices.cz>  Mon, 26 Jan 2009 09:50:36 +0100
+
 django-sane-testing (0.3.1) unstable; urgency=low
 
   * Fixed bad non-method-cases handling 
