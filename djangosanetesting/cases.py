@@ -8,6 +8,8 @@ from nose.tools import (
 )
 from nose import SkipTest
 
+__all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase", "HttpTestCase", "SeleniumTestCase")
+
 class SaneTestCase(object):
     """ Common ancestor we're using our own hierarchy """
     start_live_server = False

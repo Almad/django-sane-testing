@@ -33,7 +33,8 @@ setup(
     ],
     entry_points = {
         'nose.plugins.0.10': [
-            'djangoliveserver = %s.noseplugins:LiveHttpServerRunnerPlugin' % name,
+            'djangoliveserver = %s.noseplugins:DjangoLiveServerPlugin' % name,
+            'cherrypyliveserver = %s.noseplugins:CherryPyLiveServerPlugin' % name,
             'django = %s.noseplugins:DjangoPlugin' % name,
             'selenium = %s.noseplugins:SeleniumPlugin' % name,
         ]

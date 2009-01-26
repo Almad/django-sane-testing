@@ -29,6 +29,22 @@ class TestLiveServerRunning(HttpTestCase):
     def test_client_available(self):
         res = self.client.get('/testtwohundred/')
         self.assert_equals(200, res.status_code)
+    
+    def test_not_authorized_not_resetable(self):
+        # This is lame, but condition is non-deterministic and reveals itself
+        # when repeating request often...
+        for i in xrange(1, 10):
+            try:
+                response = urllib2.urlopen(url='http://%(host)s:%(port)s/return_not_authorized/' % {
+                    'host' : self.host,
+                    'port' : self.port
+                },
+                data='data')
+                #response = opener.open(request)
+            except urllib2.HTTPError, err:
+                self.assert_equals(401, err.code)
+            else:
+                assert False, "401 expected"
 
 class TestSeleniumWorks(SeleniumTestCase):
     def test_ok(self):
