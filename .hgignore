@@ -14,3 +14,4 @@ testproject/config.py
 build
 dist
 MANIFEST
+doc/.build
