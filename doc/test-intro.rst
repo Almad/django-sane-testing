@@ -8,6 +8,8 @@ In this chapter, I'd like to present my view on testing, especially on web appli
 
 When speaking about tests, I mean only tests written by developers themselves. QA has it's own tools and procedures that are out of scope of this document (and library).
 
+.. _developer-tests:
+
 ----------------------------
 Developer tests and xUnit
 ----------------------------
