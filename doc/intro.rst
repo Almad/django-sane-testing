@@ -4,7 +4,7 @@
 Introduction
 ====================
 
-Django: Sane Testing is a `Python`_ library for `Django`_ framework that makes it possible to test.
+Django: Sane Testing is a `Python`_ library for the `Django`_ framework that makes it possible to test.
 
 As much as I like some `Django`_ concepts and as much as authors embrace testing in official documentation, I doubt that anyone really tried them in detail. Some basic testing techniques are impossible with `Django`_ and this library comes to fix them.
 
@@ -23,7 +23,7 @@ Library supports following:
 * Nose integration (load plugins and try ``noserun``)
 * `Django`_ integration (``./manage.py test`` and boo ya)
 * True unittests (no database interaction, no handling needed = SPEED)
-* HTTP tests (You can test with `urllib2 <http://docs.python.org/library/urllib2.html>`_)
+* HTTP tests (you can test with `urllib2 <http://docs.python.org/library/urllib2.html>`_)
 * Transactional database tests (everything in one transaction, no database flush)
 * `Selenium`_ RC integration (our pages needs to be tested with browser)
 * `CherryPy`_ can be used instead of `Django`_ 's WSGI (when you need usable server	)

@@ -65,6 +65,7 @@ Most likely, you'll end up with something like :cmd:`DJANGO_SETTINGS_MODULE="set
 
 #TODO: Test type selection is not supported yet (= run all selenium tests but do not run unittests et al). This is considered a bug and will be fixed in next releases.
 
+.. _plugins:
 -----------------
 Plugins
 -----------------
