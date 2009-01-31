@@ -14,7 +14,7 @@ When speaking about tests, I mean only tests written by developers themselves. Q
 Developer tests and xUnit
 ----------------------------
 
-For past few years, unit-testing and test-driven development became nice buzzwords and together with agile and extreme programming created new style of programming. To take full advantage of testing, however, your precious test-suite must be handled properly, otherwise you will fail into futile world of slow, long test suites (speaking of which, don't Django "unittest" suite take hour to run?) and constant need for suite refactor, which questions value of tests.
+For past few years, unit-testing and test-driven development became nice buzzwords and together with agile and extreme programming created new style of programming. To take full advantage of testing, however, your precious test-suite must be handled properly, otherwise you will fail into futile world of slow, long test suites and constant need for suite refactor, which questions value of tests.
 
 First of all, test suite must be deterministic. Under all supported configurations, tests suite must pass green; when some tests could not pass because of configured environment (like using some soft of application backend that do not support some features), tests must mark themselves as skipped.
 
