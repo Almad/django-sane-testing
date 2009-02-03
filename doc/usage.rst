@@ -79,6 +79,7 @@ Provided plugins:
 * :ref:`django-live-server-plugin`
 * :ref:`cherrypy-live-server-plugin`
 * :ref:`selenium-plugin`
+* :ref:`sane-test-selection-plugin`
 
 .. _django-plugin:
 
@@ -143,6 +144,33 @@ Selenium proxy server must be set up and running, there is no support for auto-l
 * ``FORCE_SELENIUM_TESTS`` changes running behavior, see below.
 
 When plugin encounters ``selenium_start`` attribute (set to True), it tries to start browser on selenium proxy. If exception occurs (well, I'd catch socket errors, but this seems to be impossible on Windows), it assumes that proxy is not running, thus environment conditions are not met and :exc:`SkipTest` is raised. If ``FORCE_SELENIUM_TESTS`` is set to True, then original exceptin is raised instead, causing test to fail (usable on web testing CI server to ensure tests are runnig properly and are not mistakenly skipped).
+
+.. _sane-test-selection-plugin:
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:class:`SaneTestSelectionPlugin`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Test cases varies in their speed, in order:
+
+#. Unit tests
+#. Database tests
+#. Destructive database tests and HTTP tests
+#. Selenium webtests
+
+As your test suite will grow, you'll probably want to do *test pipelining*: run your tests in order, from fastest to slowest, and if one of the suites will break, you'll stop running slower tests to save time and resources.
+
+This can be done with :class:`SaneTestSelectionPlugin`. When enabled by ``--with-sanetestselection``, you can pass additional parameters to enable respecitve types of tests:
+
+* ``--select-unittests`` (or ``-u``)
+* ``--select-databasetests``
+* ``--select-destructivedatabasetests`` and ``--select-httptests``
+* ``--select-seleniumtests``
+
+Only selected test types will be run. Test type is determined from class attribute :attr:`test_type`; when not found, test is assumed to be unittest.
+
+.. Note::
+  You're still responsible for loading required plugins for respective test cases. Unlike test selection with usual plugins, selection plugin enables you to run slower tests without faster (i.e. HTTP tests without unittests), and also skipping is faster (Selection plugin is run before others, thus skip is done without any unneccessary database handling, which may not be true for usual skips).
 
 
 .. _django-sane-testing: http://devel.almad.net/trac/django-sane-testing/

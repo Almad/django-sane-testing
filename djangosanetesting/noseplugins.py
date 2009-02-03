@@ -394,29 +394,28 @@ class SaneTestSelectionPlugin(Plugin):
         parser.add_option(
             "-u", "--select-unittests", action="store_true",
             default=False, dest="select_unittests",
-            help=""
+            help="Run all unittests"
         )
         parser.add_option(
             "--select-databasetests", action="store_true",
             default=False, dest="select_databasetests",
-            help=""
+            help="Run all database tests"
         )
         parser.add_option(
             "--select-destructivedatabasetests", action="store_true",
             default=False, dest="select_destructivedatabasetests",
-            help=""
+            help="Run all destructive database tests"
         )
         parser.add_option(
             "--select-httptests", action="store_true",
             default=False, dest="select_httptests",
-            help=""
+            help="Run all HTTP tests"
         )
         parser.add_option(
             "--select-seleniumtests", action="store_true",
             default=False, dest="select_seleniumtests",
-            help=""
+            help="Run all Selenium tests"
         )
-
 
     def configure(self, options, config):
         Plugin.configure(self, options, config)
@@ -426,3 +425,4 @@ class SaneTestSelectionPlugin(Plugin):
         test_case = get_test_case_class(test)
         if getattr(test_case, "test_type", "unit") not in self.enabled_tests:
             raise SkipTest(u"Test type %s not enabled" % getattr(test_case, "test_type", "unit"))
+
