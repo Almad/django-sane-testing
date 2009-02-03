@@ -27,6 +27,10 @@ class TestDatabaseRollbackCase(DatabaseTestCase):
 
         # check we got stored properly
         self.assert_equals(2, len(ExampleModel.objects.all()))
+    
+    def test_client_available(self):
+        res = self.client.get('/testtwohundred/')
+        self.assert_equals(200, res.status_code)
 
 class TestFixturesLoadedProperly(HttpTestCase):
     fixtures = ["random_model_for_testing"]
