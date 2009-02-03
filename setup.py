@@ -37,6 +37,7 @@ setup(
             'cherrypyliveserver = %s.noseplugins:CherryPyLiveServerPlugin' % name,
             'django = %s.noseplugins:DjangoPlugin' % name,
             'selenium = %s.noseplugins:SeleniumPlugin' % name,
+            'sanetestselection = %s.noseplugins:SaneTestSelectionPlugin' % name,
         ]
     }
 )

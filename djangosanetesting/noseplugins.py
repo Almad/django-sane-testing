@@ -18,7 +18,7 @@ from nose.plugins import Plugin
 from djangosanetesting.cases import HttpTestCase, DatabaseTestCase, DestructiveDatabaseTestCase
 from djangosanetesting.selenium.driver import selenium
 
-__all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin",)
+__all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin")
 
 def flush_urlconf(case):
     if hasattr(case, '_old_root_urlconf'):
@@ -268,7 +268,6 @@ class DjangoPlugin(Plugin):
         test_case = get_test_case_class(test)
         self.previous_test_needed_flush = self.need_flush
         mail.outbox = []
-        
         enable_test(test_case, 'django_plugin_started')
         
         # clear URLs if needed
@@ -339,7 +338,7 @@ class SeleniumPlugin(Plugin):
     activation_parameter = '--with-selenium'
     name = 'selenium'
     
-    score = 120
+    score = 80
     
     def options(self, parser, env=os.environ):
         Plugin.options(self, parser, env)
@@ -357,7 +356,6 @@ class SeleniumPlugin(Plugin):
         test_case = get_test_case_class(test)
 
         enable_test(test_case, 'selenium_plugin_started')
-
         
         if getattr(test_case, "selenium_start", False):
             sel = selenium(
@@ -386,3 +384,45 @@ class SeleniumPlugin(Plugin):
             test.test.test.im_self.selenium.stop()
             test.test.test.im_self.selenium = None
 
+class SaneTestSelectionPlugin(Plugin):
+    """ Accept additional options, so we can filter out test we don't want """
+    RECOGNIZED_TESTS = ["unit", "database", "destructivedatabase", "http", "selenium"]
+    score = 150
+    
+    def options(self, parser, env=os.environ):
+        Plugin.options(self, parser, env)
+        parser.add_option(
+            "-u", "--select-unittests", action="store_true",
+            default=False, dest="select_unittests",
+            help=""
+        )
+        parser.add_option(
+            "--select-databasetests", action="store_true",
+            default=False, dest="select_databasetests",
+            help=""
+        )
+        parser.add_option(
+            "--select-destructivedatabasetests", action="store_true",
+            default=False, dest="select_destructivedatabasetests",
+            help=""
+        )
+        parser.add_option(
+            "--select-httptests", action="store_true",
+            default=False, dest="select_httptests",
+            help=""
+        )
+        parser.add_option(
+            "--select-seleniumtests", action="store_true",
+            default=False, dest="select_seleniumtests",
+            help=""
+        )
+
+
+    def configure(self, options, config):
+        Plugin.configure(self, options, config)
+        self.enabled_tests = [i for i in self.RECOGNIZED_TESTS if getattr(options, "select_%stests" % i, False)]
+    
+    def startTest(self, test):
+        test_case = get_test_case_class(test)
+        if getattr(test_case, "test_type", "unit") not in self.enabled_tests:
+            raise SkipTest(u"Test type %s not enabled" % getattr(test_case, "test_type", "unit"))

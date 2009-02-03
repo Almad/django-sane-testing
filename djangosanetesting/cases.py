@@ -63,6 +63,7 @@ class UnitTestCase(SaneTestCase):
     and thus not need any special treatment.
     """
     no_database_interaction = True
+    test_type = "unit"
     
 class DatabaseTestCase(SaneTestCase):
     """
@@ -74,6 +75,7 @@ class DatabaseTestCase(SaneTestCase):
     database_flush = False
     required_sane_plugins = ["django"]
     django_plugin_started = False
+    test_type = "database"
     
 class DestructiveDatabaseTestCase(DatabaseTestCase):
     """
@@ -81,6 +83,7 @@ class DestructiveDatabaseTestCase(DatabaseTestCase):
     """
     database_single_transaction = True
     database_flush = True
+    test_type = "destructivedatabase"
 
 class HttpTestCase(DestructiveDatabaseTestCase):
     """
@@ -90,7 +93,7 @@ class HttpTestCase(DestructiveDatabaseTestCase):
     start_live_server = True
     required_sane_plugins = ["django", "http"]
     http_plugin_started = False
-    
+    test_type = "http"
     
     def get_django_client(self):
         from django.test import Client
@@ -116,4 +119,5 @@ class SeleniumTestCase(HttpTestCase):
     start_live_server = True
     required_sane_plugins = ["django", "selenium", "http"]
     selenium_plugin_started = False
+    test_type = "selenium"
 
