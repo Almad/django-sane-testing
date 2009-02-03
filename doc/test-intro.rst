@@ -55,7 +55,7 @@ There is, however, compromise solution: transactions. Rolling back a transaction
 HTTP Tests
 -----------------------
 
-While Django's `TestClient <http://docs.djangoproject.com/en/dev/topics/testing/#default-test-client>`_ is cool, it's not usable for all cases (like, when you want to test your HTTP Basic/Digest view protection). If you want to test it, use HttpTestCase (which is sadly also ``DestructiveDatabaseTestCase)``) and framework will fire up multithreaded Django live server for you.
+While Django's `TestClient <http://docs.djangoproject.com/en/dev/topics/testing/#default-test-client>`_ (available for :class:`DatabaseTestCase` and above) is cool, it's not usable for all cases (like, when you want to test your HTTP Basic/Digest view protection). If you want to test it, use :class:`HttpTestCase` (which is sadly also :class:`DestructiveDatabaseTestCase`) and framework will fire up multithreaded Django live server for you.
 
 If this is not enough (and might not be, Django server is still kinda incomplete), you can have your Django served with CherryPy's production-ready, multi-threaded server. Just set ``CHERRYPY_TEST_SERVER=True`` in your settings and enjoy server you can repeatably connect to.
 

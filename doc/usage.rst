@@ -63,7 +63,7 @@ More flexible and granular way is using standard ``nosetests`` command. However,
 
 Most likely, you'll end up with something like ``DJANGO_SETTINGS_MODULE="settings" PYTHONPATH=".:.." nosetests --with-django``; you can, however, flexibly add another nose modules (like ``--with-coverage``).
 
-#TODO: Test type selection is not supported yet (= run all selenium tests but do not run unittests et al). This is considered a bug and will be fixed in next releases.
+Fine-grained test type selection is available via :class:`SaneTestSelectionPlugin`.
 
 .. _plugins:
 
