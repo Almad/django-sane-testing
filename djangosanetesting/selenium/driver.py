@@ -17,6 +17,9 @@ limitations under the License.
 __docformat__ = "restructuredtext en"
 
 # This file has been automatically generated via XSL
+# Alteration has been added by Almad <bugs at almad.net> for some sane
+# testing alterations, like wait_for_element_present support
+# and it's usage before clicking et al
 
 import httplib
 import urllib
@@ -281,6 +284,7 @@ class selenium:
         
         'locator' is an element locator
         """
+        self.wait_for_element_present(locator)
         self.do_command("click", [locator,])
 
 
@@ -292,6 +296,7 @@ class selenium:
         
         'locator' is an element locator
         """
+        self.wait_for_element_present(locator)
         self.do_command("doubleClick", [locator,])
 
 
@@ -313,6 +318,7 @@ class selenium:
         'locator' is an element locator
         'coordString' is specifies the x,y position (i.e. - 10,20) of the mouse      event relative to the element returned by the locator.
         """
+        self.wait_for_element_present(locator)
         self.do_command("clickAt", [locator,coordString,])
 
 
@@ -1140,6 +1146,7 @@ class selenium:
         
         'locator' is an element locator
         """
+        self.wait_for_element_present(locator)
         return self.get_string("getValue", [locator,])
 
 
@@ -1152,6 +1159,7 @@ class selenium:
         
         'locator' is an element locator
         """
+        self.wait_for_element_present(locator)
         return self.get_string("getText", [locator,])
 
 
@@ -1432,6 +1440,7 @@ class selenium:
         'locator' is an element locator
         'movementsString' is offset in pixels from the current location to which the element should be moved, e.g., "+70,-300"
         """
+        self.wait_for_element_present(locator)
         self.do_command("dragAndDrop", [locator,movementsString,])
 
 
@@ -2012,4 +2021,8 @@ class selenium:
         'keycode' is an integer keycode number corresponding to a java.awt.event.KeyEvent; note that Java keycodes are NOT the same thing as JavaScript keycodes!
         """
         self.do_command("keyPressNative", [keycode,])
+        
+    def wait_for_element_present(self,locator):
+        self.do_command("waitForElementPresent", [locator,])
+
 
