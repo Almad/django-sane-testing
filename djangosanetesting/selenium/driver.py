@@ -593,6 +593,7 @@ class selenium:
         'locator' is an element locator
         'value' is the value to type
         """
+        self.wait_for_element_present(locator)
         self.do_command("type", [locator,value,])
 
 
@@ -616,6 +617,7 @@ class selenium:
         'locator' is an element locator
         'value' is the value to type
         """
+        self.wait_for_element_present(locator)
         self.do_command("typeKeys", [locator,value,])
 
 
