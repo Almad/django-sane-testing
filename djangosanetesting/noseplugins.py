@@ -144,14 +144,21 @@ class AbstractLiveServerPlugin(Plugin):
 
     def configure(self, options, config):
         Plugin.configure(self, options, config)
-        
+    
+    def start_server(self):
+        raise NotImplementedError()
+
+    def stop_server(self):
+        raise NotImplementedError()
+    
     def startTest(self, test):
         test_case = get_test_case_class(test)
         test_instance = get_test_case_instance(test)
-        if not self.server_started and (issubclass(test_case, HttpTestCase) or (hasattr(test_case, "start_live_server") and test_case.start_live_server)):
+        if not self.server_started and getattr(test_case, "start_live_server", False):
             self.start_server()
             self.server_started = True
-            enable_test(test_case, 'http_plugin_started')
+            
+        enable_test(test_case, 'http_plugin_started')
             
         # clear test client for test isolation
         if test_instance:
@@ -211,8 +218,9 @@ class CherryPyLiveServerPlugin(AbstractLiveServerPlugin):
          sleep(.5)
     
     def stop_test_server(self):
-        if getattr(self, "httpd", False):
+        if self.server_started:
             self.httpd.stop()
+            self.server_started = False
 
 class DjangoPlugin(Plugin):
     """
