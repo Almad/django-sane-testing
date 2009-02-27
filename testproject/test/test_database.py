@@ -32,6 +32,32 @@ class TestDatabaseRollbackCase(DatabaseTestCase):
         res = self.client.get('/testtwohundred/')
         self.assert_equals(200, res.status_code)
 
+class TestProperClashing(DatabaseTestCase):
+    """
+    Test we're getting expected failures when working with db,
+    i.e. that database is not purged between tests, only rolled back.
+    We rely that test suite executed methods in this order:
+      (1) test_aaa_commit_object
+      (2) test_bbb_object_present
+      (3) test_ccc_object_still_present
+      
+    This is antipattern and should not be used, but it's hard to test
+    framework from within ;) Better solution would be greatly appreciated.  
+    """
+    
+    def test_aaa_commit_object(self):
+        ExampleModel.objects.create(name="test1")
+        self.transaction.commit()
+
+    def test_bbb_object_present(self):
+        self.assert_equals(1, len(ExampleModel.objects.all()))
+
+    def test_ccc_object_still_present(self):
+        self.assert_equals(1, len(ExampleModel.objects.all()))
+        ExampleModel.objects.all()[0].delete()
+        self.transaction.commit()
+
+
 class TestFixturesLoadedProperly(HttpTestCase):
     fixtures = ["random_model_for_testing"]
 

@@ -295,20 +295,25 @@ class DjangoPlugin(Plugin):
             # as unittests by definition do not interacts
             return
         
-        if (hasattr(test_case, "database_flush") and test_case.database_flush is True):
+        # make self.transaction available
+        test_case.transaction = transaction
+        self.commits_could_be_used = False
+        
+        if getattr(test_case, "database_flush", True):
             call_command('flush', verbosity=0, interactive=False)
-            # it's possible that some garbage will be left
+            # it's possible that some garbage will be left after us, flush next time
             self.need_flush = True
-            self.flushed = False
+            # commits are allowed during tests
+            self.commits_could_be_used = True
             
-        # previous test needed flush
+        # previous test needed flush, clutter could have stayed in database
         elif self.previous_test_needed_flush is True:
             call_command('flush', verbosity=0, interactive=False)
             self.need_flush = False
-            self.flushed = True
+        
+        # otherwise we should have done our job
         else:
-            self.need_flush = True
-            self.flushed = True
+            self.need_flush = False
             
         
         if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
@@ -318,9 +323,7 @@ class DjangoPlugin(Plugin):
         # fixtures are loaded inside transaction, thus we don't need to flush
         # between database_single_transaction tests when their fixtures differ
         if hasattr(test_case, 'fixtures'):
-            # We have to use this slightly awkward syntax due to the fact
-            # that we're using *args and **kwargs together.
-            if self.need_flush:
+            if self.commits_could_be_used:
                 commit = True
             else:
                 commit = False
