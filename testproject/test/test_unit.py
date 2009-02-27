@@ -65,18 +65,18 @@ class TestProperClashing(UnitTestCase):
     Test we're getting expected failures when working with db,
     i.e. that database is not purged between tests.
     We rely that test suite executed methods in this order:
-      (1) test_aaa_inserting_two
-      (2) test_bbb_inserting_another_two
+      (1) test_aaa_inserting_model
+      (2) test_bbb_inserting_another
       
     This is antipattern and should not be used, but it's hard to test
     framework from within ;) Better solution would be greatly appreciated.  
     """
     
-    def test_aaa_inserting_two(self):
+    def test_aaa_inserting_model(self):
         ExampleModel.objects.create(name="test1")
         self.assert_equals(1, len(ExampleModel.objects.all()))
 
-    def test_bbb_inserting_another_two(self):
+    def test_bbb_inserting_another(self):
         ExampleModel.objects.create(name="test2")
         self.assert_equals(2, len(ExampleModel.objects.all()))
 
