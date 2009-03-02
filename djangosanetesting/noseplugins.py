@@ -244,8 +244,8 @@ class DjangoPlugin(Plugin):
         
         #FIXME: This should be perhaps moved to startTest and be lazy
         # for tests that do not need test database at all
-        import settings
         from django.db import connection
+	from django.conf import settings
         self.old_name = settings.DATABASE_NAME
         
         connection.creation.create_test_db(verbosity=False, autoclobber=True)
@@ -258,7 +258,6 @@ class DjangoPlugin(Plugin):
         from django.test.utils import teardown_test_environment
         teardown_test_environment()
 
-        import settings
         from django.db import connection
         connection.creation.destroy_test_db(self.old_name, verbosity=False)
     
