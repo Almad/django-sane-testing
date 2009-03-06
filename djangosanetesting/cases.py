@@ -2,6 +2,7 @@ from django.core.urlresolvers import clear_url_caches
 from nose.tools import (
                 assert_equals,
                 assert_almost_equals,
+                assert_not_equals,
                 assert_raises,
                 assert_true,
                 assert_false,
@@ -33,6 +34,12 @@ class SaneTestCase(object):
         assert_equals(*args, **kwargs)
     
     assertEquals = assert_equals
+    
+    def assert_not_equals(self, *args, **kwargs):
+        assert_not_equals(*args, **kwargs)
+    
+    assertNotEquals = assert_not_equals
+    
 
     def assert_almost_equals(self, *args, **kwargs):
         assert_almost_equals(*args, **kwargs)
