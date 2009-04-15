@@ -161,7 +161,7 @@ class AbstractLiveServerPlugin(Plugin):
         if not self.server_started and getattr(test_case, "start_live_server", False):
             self.start_server(
                 address=getattr(settings, "LIVE_SERVER_ADDRESS", DEFAULT_LIVE_SERVER_ADDRESS),
-                port=getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT)
+                port=int(getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT))
             )
             self.server_started = True
             
