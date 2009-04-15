@@ -103,6 +103,11 @@ Responsible for starting HTTP server, sort of same as ``./manage.py runserver``,
 
 Server is first started when :attr:`start_live_server` attribute is first encountered, and is stopped after whole testsuite.
 
+Plugin uses following setttings variables:
+  * ``LIVE_SERVER_PORT`` - to which port live server is bound to. Default to 8000.
+  * ``LIVE_SERVER_ADDRESS`` - to which IP address/interface server is bound to. Default to 0.0.0.0, meaning "all interfaces".
+
+
 .. Warning::
 
   Because application logic is always executed in another thread (even when server would be single-threaded), it's not possible to use :class:`HttpTestCase`'s with in-memory databases (well, theoretically, we could do database setup in each thread and have separate databases, but that will be really nasty).
@@ -118,6 +123,10 @@ Server is first started when :attr:`start_live_server` attribute is first encoun
 Responsible for starting HTTP server, in similar way to :class:`DjangoLiveServerPlugin`. However, `CherryPy`_ WSGI is used instead, as it's much more mature and considered to be production-ready, unlike Django's development server.
 
 Use when in need of massive parallel requests, or when encountering a bug (like `#10117 <http://code.djangoproject.com/ticket/10117>`_).
+
+Plugin uses following setttings variables:
+  * ``LIVE_SERVER_PORT`` - to which port live server is bound to. Default to 8000.
+  * ``LIVE_SERVER_ADDRESS`` - to which IP address/interface server is bound to. Default to 0.0.0.0, meaning "all interfaces".
 
 .. Note::
   When using ``./manage.py test``, Django server is used by default. You can use `CherryPy`_'s by setting ``CHERRYPY_TEST_SERVER = True`` in settings.py.
@@ -140,7 +149,7 @@ Selenium proxy server must be set up and running, there is no support for auto-l
 * ``SELENIUM_BROWSER_COMMAND`` - which browser command should be send to proxy server to launch. Default to "*opera" and may require some more complicated adjusting on some configurations, take a look at `experimental launchers <http://seleniumhq.org/projects/remote-control/experimental.html>`_.
 * ``SELENIUM_HOST`` - where Selenium proxy server is running. Default to "localhost"
 * ``SELENIUM_PORT`` - to which port Selenium server is bound to. Default to 4444.
-* ``SELENIUM_URL_ROOT`` - where is (from proxy server's point of view) application running. Default to "http://localhost:8000/".
+* ``SELENIUM_URL_ROOT`` - where is (from proxy server's point of view) application running. Default to "http://LIVE_SERVER_HOST:LIVE_SERVER_PORT/"
 * ``FORCE_SELENIUM_TESTS`` changes running behavior, see below.
 
 When plugin encounters ``selenium_start`` attribute (set to True), it tries to start browser on selenium proxy. If exception occurs (well, I'd catch socket errors, but this seems to be impossible on Windows), it assumes that proxy is not running, thus environment conditions are not met and :exc:`SkipTest` is raised. If ``FORCE_SELENIUM_TESTS`` is set to True, then original exceptin is raised instead, causing test to fail (usable on web testing CI server to ensure tests are runnig properly and are not mistakenly skipped).
