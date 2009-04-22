@@ -252,7 +252,7 @@ class DjangoPlugin(Plugin):
         #FIXME: This should be perhaps moved to startTest and be lazy
         # for tests that do not need test database at all
         from django.db import connection
-	from django.conf import settings
+        from django.conf import settings
         self.old_name = settings.DATABASE_NAME
         
         connection.creation.create_test_db(verbosity=False, autoclobber=True)
@@ -274,7 +274,9 @@ class DjangoPlugin(Plugin):
         When preparing test, check whether to make our database fresh
         """
         #####
-        ### FIXME: Method is a bit ugly, would be nice to refactor if's to methods
+        ### FIXME: Method is a bit ugly, would be nice to refactor if's to more granular method
+        ### Additionally, it would be nice to separate handlings as plugins et al...but what about
+        ### the context?
         #####
         
         from django.db import transaction
@@ -298,7 +300,7 @@ class DjangoPlugin(Plugin):
         
         if getattr(test_case, 'no_database_interaction', False):
             # for true unittests, we can leave database handling for later,
-            # as unittests by definition do not interacts
+            # as unittests by definition do not interacts with database
             return
         
         # make self.transaction available
