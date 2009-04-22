@@ -15,13 +15,13 @@ import nose
 from nose import SkipTest
 from nose.plugins import Plugin
 
-from djangosanetesting.cases import HttpTestCase, DatabaseTestCase, DestructiveDatabaseTestCase
 from djangosanetesting.selenium.driver import selenium
 
 __all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin")
 
 DEFAULT_LIVE_SERVER_PORT=8000
 DEFAULT_LIVE_SERVER_ADDRESS='0.0.0.0'
+DEFAULT_URL_ROOT_SERVER_ADDRESS = '127.0.0.1'
 
 def flush_urlconf(case):
     if hasattr(case, '_old_root_urlconf'):
@@ -383,7 +383,7 @@ class SeleniumPlugin(Plugin):
                       getattr(settings, "SELENIUM_BROWSER_COMMAND", '*opera'),
                       getattr(settings, "SELENIUM_URL_ROOT", getattr(settings, "URL_ROOT", "http://%s:%s/" % (
                         getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT),
-                        getattr(settings, "LIVE_SERVER_ADDRESS", DEFAULT_LIVE_SERVER_ADDRESS)
+                        getattr(settings, "LIVE_SERVER_ADDRESS", DEFAULT_URL_ROOT_SERVER_ADDRESS)
                       ))),
                   ) 
             try:
