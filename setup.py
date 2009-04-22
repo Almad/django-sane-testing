@@ -11,7 +11,7 @@ from setuptools import setup
 project_dir = 'djangosanetesting'
 name = 'djangosanetesting'
 
-version = __import__('djangosanetesting').__versionstr__
+version = '0.5.3-alpha1'
 setup(
     name = name, 
     version = version,
