@@ -149,7 +149,7 @@ Selenium proxy server must be set up and running, there is no support for auto-l
 * ``SELENIUM_BROWSER_COMMAND`` - which browser command should be send to proxy server to launch. Default to "*opera" and may require some more complicated adjusting on some configurations, take a look at `experimental launchers <http://seleniumhq.org/projects/remote-control/experimental.html>`_.
 * ``SELENIUM_HOST`` - where Selenium proxy server is running. Default to "localhost"
 * ``SELENIUM_PORT`` - to which port Selenium server is bound to. Default to 4444.
-* ``SELENIUM_URL_ROOT`` - where is (from proxy server's point of view) application running. Default to "http://LIVE_SERVER_HOST:LIVE_SERVER_PORT/"
+* ``SELENIUM_URL_ROOT`` - where is (from proxy server's point of view) application running. Default to "http://URL_ROOT_SERVER_ADDRESS:LIVE_SERVER_PORT/" (There is a difference between ``LIVE_SERVER_ADDRESS`` and ``URL_ROOT_SERVER_ADDRESS``, as ``LIVE_SERVER_ADDRESS`` is where server is bound to and ``URL_ROOT_SERVER_ADDRESS`` is which address is visible to client. Important when server is bound to all interfaces, as 0.0.0.0 is not a viable option for browser.)
 * ``FORCE_SELENIUM_TESTS`` changes running behavior, see below.
 
 When plugin encounters ``selenium_start`` attribute (set to True), it tries to start browser on selenium proxy. If exception occurs (well, I'd catch socket errors, but this seems to be impossible on Windows), it assumes that proxy is not running, thus environment conditions are not met and :exc:`SkipTest` is raised. If ``FORCE_SELENIUM_TESTS`` is set to True, then original exceptin is raised instead, causing test to fail (usable on web testing CI server to ensure tests are runnig properly and are not mistakenly skipped).
