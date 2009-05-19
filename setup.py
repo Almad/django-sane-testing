@@ -11,9 +11,9 @@ from setuptools import setup
 project_dir = 'djangosanetesting'
 name = 'djangosanetesting'
 
-version = '0.5.3'
+version = '0.5.4'
 setup(
-    name = name, 
+    name = name,
     version = version,
     url = 'http://devel.almad.net/trac/django-sane-testing/',
     author = 'Lukas Linhart',
