@@ -10,7 +10,6 @@ from time import sleep
 
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
-from django.contrib.contenttypes.models import ContentType
 
 import nose
 from nose import SkipTest
@@ -352,6 +351,7 @@ class DjangoPlugin(Plugin):
             transaction.leave_transaction_management()
 
         flush_urlconf(self)
+        from django.contrib.contenttypes.models import ContentType
         ContentType.objects.clear_cache()
 
 class SeleniumPlugin(Plugin):
