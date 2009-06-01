@@ -10,6 +10,7 @@ from time import sleep
 
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
+from django.utils import translation
 
 import nose
 from nose import SkipTest
@@ -166,7 +167,7 @@ class AbstractLiveServerPlugin(Plugin):
             self.server_started = True
             
         enable_test(test_case, 'http_plugin_started')
-            
+        
         # clear test client for test isolation
         if test_instance:
             test_instance.client = None
@@ -282,12 +283,21 @@ class DjangoPlugin(Plugin):
         from django.db import transaction
         from django.test.testcases import call_command
         from django.core import mail
+        from django.conf import settings
         
         test_case = get_test_case_class(test)
         self.previous_test_needed_flush = self.need_flush
         mail.outbox = []
         enable_test(test_case, 'django_plugin_started')
-        
+
+        # set translation, if allowed
+        if getattr(test_case, "make_translations", None):
+            lang = getattr(test_case, "translation_language_code", None)
+            if not lang:
+                lang = getattr(settings, "LANGUAGE_CODE", 'en-us')
+            translation.activate(lang)
+
+
         # clear URLs if needed
         if hasattr(test_case, 'urls'):
             test_case._old_root_urlconf = settings.ROOT_URLCONF
@@ -351,8 +361,12 @@ class DjangoPlugin(Plugin):
             transaction.leave_transaction_management()
 
         flush_urlconf(self)
+        
         from django.contrib.contenttypes.models import ContentType
         ContentType.objects.clear_cache()
+
+#        if getattr(test_case, "make_translations", None):
+        translation.deactivate()
 
 class SeleniumPlugin(Plugin):
     """

@@ -18,6 +18,7 @@ class SaneTestCase(object):
     database_flush = False
     selenium_start = False
     no_database_interaction = False
+    make_translations = True
     
     SkipTest = SkipTest
     

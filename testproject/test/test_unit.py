@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from djangosanetesting.cases import UnitTestCase
 
 from testapp.models import ExampleModel
@@ -79,6 +80,31 @@ class TestProperClashing(UnitTestCase):
     def test_bbb_inserting_another(self):
         ExampleModel.objects.create(name="test2")
         self.assert_equals(2, len(ExampleModel.objects.all()))
+
+class TestTranslations(UnitTestCase):
+    def test_czech_string_acquired(self):
+        """
+        Test we're retrieving string translated to Czech.
+        This is assuming we're using LANG="cs"
+        """
+        self.assert_equals(u"Přeložitelný řetězec", unicode(ExampleModel.get_translated_string()))
+
+
+#TODO: This is not working, looks like once you cannot return to null translations
+# once you have selected any. Patches welcomed.
+#class TestSkippedTranslations(UnitTestCase):
+#    make_translations=False
+#
+#    def test_english_string_acquired(self):
+#        from django.utils import translation
+#        translation.deactivate()
+#        self.assert_equals(u"Translatable string", unicode(ExampleModel.get_translated_string()))
+
+class TestNotDefaultTranslations(UnitTestCase):
+    translation_language_code = 'de'
+    def test_english_string_acquired(self):
+        self.assert_equals(u"Ersetzbare Zeichenkette", unicode(ExampleModel.get_translated_string()))
+
 
 def function_test():
     # just to verify we work with them

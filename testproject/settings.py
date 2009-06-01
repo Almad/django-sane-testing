@@ -54,3 +54,5 @@ TEST_RUNNER='djangosanetesting.testrunner.run_tests'
 TEST_DATABASE_CHARSET="utf8"
 
 CHERRYPY_TEST_SERVER = True
+
+LANGUAGE_CODE = 'cs'

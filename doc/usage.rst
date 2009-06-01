@@ -92,6 +92,11 @@ Provided plugins:
 * If :attr:`no_database_interaction` attribute is True, then whole database handling is skipped (this is to speed thing up for :class:`UnitTestCase`)
 * If :attr:`database_single_transaction` is True (:class:`DatabaseTestCase`), manual transaction handling is enabled and things are rolled back after every case.
 * If :attr:`database_flush` is True, then database if flushed before every case (and on the beginning of next one, if needed)
+* If :attr:`make_translation` is True, django.utils.translation.activate() is called before every test. If :attr:`translation_language_code` is set, it's passed to activate(); otherwise settings.LANGUAGE_CODE or 'en-us' is used.
+
+.. Warning::
+
+    It looks like Django is not switching back to "null" translations once any translation has been selected. make_translations=False will thus return lastly-activated translation.
 
 .. _django-live-server-plugin:
 
