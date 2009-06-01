@@ -17,13 +17,13 @@ TEMPLATE_LOADERS = (
 
 # AUTHENTICATION_BACKENDS = ('keykeeper.libopenid.OpenidBackend',)
 
-MIDDLEWARE_CLASSES = (
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
-    'django.middleware.http.SetRemoteAddrFromForwardedFor',
-)
+#MIDDLEWARE_CLASSES = (
+#    'django.middleware.common.CommonMiddleware',
+#    'django.contrib.sessions.middleware.SessionMiddleware',
+#    'django.contrib.auth.middleware.AuthenticationMiddleware',
+#    'django.middleware.transaction.TransactionMiddleware',
+#    'django.middleware.http.SetRemoteAddrFromForwardedFor',
+#)
 
 ROOT_URLCONF = 'testproject.urls'
 

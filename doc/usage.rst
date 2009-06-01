@@ -80,6 +80,7 @@ Provided plugins:
 * :ref:`cherrypy-live-server-plugin`
 * :ref:`selenium-plugin`
 * :ref:`sane-test-selection-plugin`
+* :ref:`django-translation-plugin`
 
 .. _django-plugin:
 
@@ -92,11 +93,6 @@ Provided plugins:
 * If :attr:`no_database_interaction` attribute is True, then whole database handling is skipped (this is to speed thing up for :class:`UnitTestCase`)
 * If :attr:`database_single_transaction` is True (:class:`DatabaseTestCase`), manual transaction handling is enabled and things are rolled back after every case.
 * If :attr:`database_flush` is True, then database if flushed before every case (and on the beginning of next one, if needed)
-* If :attr:`make_translation` is True, django.utils.translation.activate() is called before every test. If :attr:`translation_language_code` is set, it's passed to activate(); otherwise settings.LANGUAGE_CODE or 'en-us' is used.
-
-.. Warning::
-
-    It looks like Django is not switching back to "null" translations once any translation has been selected. make_translations=False will thus return lastly-activated translation.
 
 .. _django-live-server-plugin:
 
@@ -186,8 +182,23 @@ Only selected test types will be run. Test type is determined from class attribu
 .. Note::
   You're still responsible for loading required plugins for respective test cases. Unlike test selection with usual plugins, selection plugin enables you to run slower tests without faster (i.e. HTTP tests without unittests), and also skipping is faster (Selection plugin is run before others, thus skip is done without any unneccessary database handling, which may not be true for usual skips).
 
+.. _django-translation-plugin:
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+:class:`DjangoTranslationPlugin`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If :attr:`make_translation` is True (default for every test), django.utils.translation.activate() is called before every test. If :attr:`translation_language_code` is set, it's passed to activate(); otherwise settings.LANGUAGE_CODE or 'en-us' is used.
+
+This allows you to use translatable string taking usage of ugettest_lazy in tests.
+
+.. Warning::
+
+    It looks like Django is not switching back to "null" translations once any translation has been selected. make_translations=False will thus return lastly-activated translation.
+
 
 .. _django-sane-testing: http://devel.almad.net/trac/django-sane-testing/
 .. _Selenium: http://seleniumhq.org/
 .. _Selenium RC: http://seleniumhq.org/projects/remote-control/
 .. _CherryPy: http://www.cherrypy.org/
+

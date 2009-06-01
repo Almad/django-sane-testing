@@ -1,6 +1,10 @@
 import sys
 
-from djangosanetesting.noseplugins import DjangoLiveServerPlugin, DjangoPlugin, SeleniumPlugin, CherryPyLiveServerPlugin
+from djangosanetesting.noseplugins import (
+    DjangoPlugin,
+    DjangoLiveServerPlugin, SeleniumPlugin, CherryPyLiveServerPlugin,
+    DjangoTranslationPlugin,
+)
 
 import nose
 from nose.config import Config, all_config_files
@@ -16,7 +20,7 @@ def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     """ Run tests with nose instead of defualt test runner """
     from django.conf import settings
     
-    plugins = [DjangoPlugin(), SeleniumPlugin()]
+    plugins = [DjangoPlugin(), SeleniumPlugin(), DjangoTranslationPlugin()]
     
     if getattr(settings, 'CHERRYPY_TEST_SERVER', False):
         plugins.append(CherryPyLiveServerPlugin())
@@ -32,6 +36,7 @@ def run_tests(test_labels, verbosity=1, interactive=True, extra_tests=[]):
     # activate all required plugins
     activate_plugin(DjangoPlugin)
     activate_plugin(SeleniumPlugin)
+    activate_plugin(DjangoTranslationPlugin)
 
     if getattr(settings, 'CHERRYPY_TEST_SERVER', False):
         activate_plugin(CherryPyLiveServerPlugin)

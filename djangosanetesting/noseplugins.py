@@ -10,7 +10,6 @@ from time import sleep
 
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
-from django.utils import translation
 
 import nose
 from nose import SkipTest
@@ -290,14 +289,6 @@ class DjangoPlugin(Plugin):
         mail.outbox = []
         enable_test(test_case, 'django_plugin_started')
 
-        # set translation, if allowed
-        if getattr(test_case, "make_translations", None):
-            lang = getattr(test_case, "translation_language_code", None)
-            if not lang:
-                lang = getattr(settings, "LANGUAGE_CODE", 'en-us')
-            translation.activate(lang)
-
-
         # clear URLs if needed
         if hasattr(test_case, 'urls'):
             test_case._old_root_urlconf = settings.ROOT_URLCONF
@@ -316,7 +307,7 @@ class DjangoPlugin(Plugin):
         # make self.transaction available
         test_case.transaction = transaction
         self.commits_could_be_used = False
-        
+
         if getattr(test_case, "database_flush", True):
             call_command('flush', verbosity=0, interactive=False)
             # it's possible that some garbage will be left after us, flush next time
@@ -347,7 +338,7 @@ class DjangoPlugin(Plugin):
                 commit = False
             call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : commit})
 
-        
+ 
     def stopTest(self, test):
         """
         After test is run, clear urlconf and caches
@@ -365,7 +356,34 @@ class DjangoPlugin(Plugin):
         from django.contrib.contenttypes.models import ContentType
         ContentType.objects.clear_cache()
 
-#        if getattr(test_case, "make_translations", None):
+class DjangoTranslationPlugin(Plugin):
+    """
+    For testcases with selenium_start set to True, connect to Selenium RC.
+    """
+    activation_parameter = '--with-djangotranslations'
+    name = 'djangotranslations'
+
+    score = 70
+
+    def options(self, parser, env=os.environ):
+        Plugin.options(self, parser, env)
+
+    def configure(self, options, config):
+        Plugin.configure(self, options, config)
+
+    def startTest(self, test):
+       # set translation, if allowed
+        test_case = get_test_case_class(test)
+        if getattr(test_case, "make_translations", None):
+            from django.conf import settings
+            from django.utils import translation
+            lang = getattr(test_case, "translation_language_code", None)
+            if not lang:
+                lang = getattr(settings, "LANGUAGE_CODE", 'en-us')
+            translation.activate(lang)
+
+    def stopTest(self, test):
+        from django.utils import translation
         translation.deactivate()
 
 class SeleniumPlugin(Plugin):
@@ -417,7 +435,7 @@ class SeleniumPlugin(Plugin):
                     test.test.test.im_self.selenium = sel
                 else:
                     raise SkipTest("I can only assign selenium to TestCase instance; argument passing will be implemented later")
-    
+
     def stopTest(self, test):
         test_case = get_test_case_class(test)
         if getattr(test_case, "selenium_start", False):

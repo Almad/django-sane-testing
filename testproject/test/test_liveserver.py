@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
 import urllib2
 from djangosanetesting.cases import HttpTestCase, SeleniumTestCase
+
+from testapp.models import ExampleModel
 
 class TestLiveServerRunning(HttpTestCase):
     def __init__(self, *args, **kwargs):
@@ -47,6 +50,14 @@ class TestLiveServerRunning(HttpTestCase):
                 assert False, "401 expected"
 
 class TestSeleniumWorks(SeleniumTestCase):
+    def setUp(self):
+        super(TestSeleniumWorks, self).setUp()
+#        from django.utils import translation
+#        translation.activate("cs")
+
     def test_ok(self):
         self.selenium.open("/testtwohundred/")
         self.selenium.is_text_present("200 OK")
+
+    def test_czech_string_acquired_even_with_selenium(self):
+        self.assert_equals(u"Přeložitelný řetězec", unicode(ExampleModel.get_translated_string()))

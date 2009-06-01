@@ -39,6 +39,7 @@ setup(
             'django = %s.noseplugins:DjangoPlugin' % name,
             'selenium = %s.noseplugins:SeleniumPlugin' % name,
             'sanetestselection = %s.noseplugins:SaneTestSelectionPlugin' % name,
+            'djangotranslations = %s.noseplugins:DjangoTranslationPlugin' % name, 
         ]
     }
 )
