@@ -8,6 +8,7 @@ from BaseHTTPServer import HTTPServer
 from SocketServer import ThreadingMixIn
 from time import sleep
 
+from django.core.management import call_command
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
 
@@ -43,6 +44,9 @@ def get_test_case_instance(nose_test):
 def enable_test(test_case, plugin_attribute):
     if not getattr(test_case, plugin_attribute, False):
         setattr(test_case, plugin_attribute, True)
+
+def flush_database(test_case):
+    call_command('flush', verbosity=0, interactive=False)
 
 #####
 ### Okey, this is hack because of #14, or Django's #3357
@@ -256,6 +260,10 @@ class DjangoPlugin(Plugin):
         self.old_name = settings.DATABASE_NAME
         
         connection.creation.create_test_db(verbosity=False, autoclobber=True)
+
+        if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", True):
+            getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
+
         self.need_flush = False
     
     def finalize(self, *args, **kwargs):
@@ -309,7 +317,7 @@ class DjangoPlugin(Plugin):
         self.commits_could_be_used = False
 
         if getattr(test_case, "database_flush", True):
-            call_command('flush', verbosity=0, interactive=False)
+            getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
             # it's possible that some garbage will be left after us, flush next time
             self.need_flush = True
             # commits are allowed during tests
@@ -317,7 +325,7 @@ class DjangoPlugin(Plugin):
             
         # previous test needed flush, clutter could have stayed in database
         elif self.previous_test_needed_flush is True:
-            call_command('flush', verbosity=0, interactive=False)
+            getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
             self.need_flush = False
         
         # otherwise we should have done our job
