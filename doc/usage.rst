@@ -197,6 +197,21 @@ This allows you to use translatable string taking usage of ugettest_lazy in test
     It looks like Django is not switching back to "null" translations once any translation has been selected. make_translations=False will thus return lastly-activated translation.
 
 
+
+.. _syncdb-messing:
+
+---------------------------
+Messing with syncdb
+---------------------------
+
+You may be doing something irresponsible like, say, referencing :class:`ContentType` ID from fixtures, working around their dynamic creation by having own content type fixture. This, however, prevents you from specifying those in fixtures attribute, as flush emits post-sync signal causing ContentTypes to be created.
+
+By specifying ``TEST_DATABASE_FLUSH_COMMAND``, you can reference a function for custom flushing (you can use resetdb instead).
+
+.. Note::
+
+    You must specify function object directly (it takes one argument, test_case object). Recognizing objects from string is not yet supported as it's not needed for me - patches and tests welcomed.
+
 .. _django-sane-testing: http://devel.almad.net/trac/django-sane-testing/
 .. _Selenium: http://seleniumhq.org/
 .. _Selenium RC: http://seleniumhq.org/projects/remote-control/
