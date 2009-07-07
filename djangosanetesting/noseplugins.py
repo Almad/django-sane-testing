@@ -261,7 +261,7 @@ class DjangoPlugin(Plugin):
         
         connection.creation.create_test_db(verbosity=False, autoclobber=True)
 
-        if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", True):
+        if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
             getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
 
         self.need_flush = False
