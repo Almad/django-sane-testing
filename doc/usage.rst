@@ -94,6 +94,8 @@ Provided plugins:
 * If :attr:`database_single_transaction` is True (:class:`DatabaseTestCase`), manual transaction handling is enabled and things are rolled back after every case.
 * If :attr:`database_flush` is True, then database if flushed before every case (and on the beginning of next one, if needed)
 
+django.db.transaction is also available under self.transaction. Use at own discretion; you should only access it when using :class:`DestructiveDatabaseTestCase` (to make data available for server thread), messing with it when using :attr:`database_single_transaction` can cause test interaction.
+
 .. _django-live-server-plugin:
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
