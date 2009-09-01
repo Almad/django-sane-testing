@@ -212,6 +212,10 @@ By specifying ``TEST_DATABASE_FLUSH_COMMAND``, you can reference a function for 
 
     You must specify function object directly (it takes one argument, test_case object). Recognizing objects from string is not yet supported as it's not needed for me - patches and tests welcomed.
 
+.. Note::
+
+    When using django-sane-testing with south (in INSTALLED_APPS), You're now required to write You own command that will call both "syncdb" and "migrate". Sane-testing will have one for future releases.    
+
 Also, create_test_db (which is needed to be run at the very beginning) emits post_sync signal. Thus, you also probably want to set ``FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB`` to True.
 
 .. _django-sane-testing: http://devel.almad.net/trac/django-sane-testing/
