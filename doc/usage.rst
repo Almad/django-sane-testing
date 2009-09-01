@@ -196,8 +196,6 @@ This allows you to use translatable string taking usage of ugettest_lazy in test
 
     It looks like Django is not switching back to "null" translations once any translation has been selected. make_translations=False will thus return lastly-activated translation.
 
-
-
 .. _syncdb-messing:
 
 ---------------------------

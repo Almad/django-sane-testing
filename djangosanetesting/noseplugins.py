@@ -113,6 +113,7 @@ class TestServerThread(threading.Thread):
 
     def run(self):
         """Sets up test server and loops over handling http requests."""
+        raise NotImplementedError()
         try:
             handler = AdminMediaHandler(WSGIHandler())
             server_address = (self.address, self.port)
@@ -125,12 +126,6 @@ class TestServerThread(threading.Thread):
             self.started.set()
             return
 
-        # When using memory database, complain as we'd use indepenent databases
-        from django.conf import settings
-        if settings.DATABASE_ENGINE == 'sqlite3' \
-            and (not settings.TEST_DATABASE_NAME or settings.TEST_DATABASE_NAME == ':memory:'):
-            raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
-        
         # Loop until we get a stop event.
         while not self._stopevent.isSet():
             httpd.handle_request()
@@ -157,12 +152,21 @@ class AbstractLiveServerPlugin(Plugin):
 
     def stop_server(self):
         raise NotImplementedError()
-    
+
+    def check_database_multithread_compilant(self):
+        # When using memory database, complain as we'd use indepenent databases
+        from django.conf import settings
+        if settings.DATABASE_ENGINE == 'sqlite3' \
+            and (not getattr(settings, 'TEST_DATABASE_NAME', False) or settings.TEST_DATABASE_NAME == ':memory:'):
+            raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
+
+
     def startTest(self, test):
         from django.conf import settings
         test_case = get_test_case_class(test)
         test_instance = get_test_case_instance(test)
         if not self.server_started and getattr(test_case, "start_live_server", False):
+            self.check_database_multithread_compilant()
             self.start_server(
                 address=getattr(settings, "LIVE_SERVER_ADDRESS", DEFAULT_LIVE_SERVER_ADDRESS),
                 port=int(getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT))
