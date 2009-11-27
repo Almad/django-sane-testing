@@ -21,7 +21,7 @@ setup(
     description = 'Support sane testing in django using nose.',
     packages = ['djangosanetesting', 'djangosanetesting.selenium'],
     scripts = [],
-    install_requires = ['Django>=1.0_final','nose>=0.10'],
+    requires = ['Django (>=1.0)', 'nose (>=0.10)'],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
