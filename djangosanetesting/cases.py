@@ -27,8 +27,13 @@ class SaneTestCase(object):
             for plugin in self.required_sane_plugins:
                 if not getattr(self, "%s_plugin_started" % plugin, False):
                     raise self.SkipTest("Plugin %s from django-sane-testing required, skipping" % plugin)
-    
+
+    def _check_skipped(self):
+        if getattr(self, "skipped", False):
+            raise self.SkipTest("I've been marked to skip myself")
+
     def setUp(self):
+        self._check_skipped()
         self._check_plugins()
     
     def assert_equals(self, *args, **kwargs):

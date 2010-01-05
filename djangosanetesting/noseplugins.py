@@ -158,7 +158,10 @@ class AbstractLiveServerPlugin(Plugin):
         from django.conf import settings
         if settings.DATABASE_ENGINE == 'sqlite3' \
             and (not getattr(settings, 'TEST_DATABASE_NAME', False) or settings.TEST_DATABASE_NAME == ':memory:'):
-            raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
+            self.skipped = True
+            return False
+            #raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
+        return True
 
 
     def startTest(self, test):
@@ -166,7 +169,8 @@ class AbstractLiveServerPlugin(Plugin):
         test_case = get_test_case_class(test)
         test_instance = get_test_case_instance(test)
         if not self.server_started and getattr(test_case, "start_live_server", False):
-            self.check_database_multithread_compilant()
+            if not self.check_database_multithread_compilant():
+                return
             self.start_server(
                 address=getattr(settings, "LIVE_SERVER_ADDRESS", DEFAULT_LIVE_SERVER_ADDRESS),
                 port=int(getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT))
@@ -436,21 +440,24 @@ class SeleniumPlugin(Plugin):
                   )
             try:
                 sel.start()
+                test_case.selenium_started = True
             except Exception, err:
                 # we must catch it all as there is untyped socket exception on Windows :-]]]
                 if getattr(settings, "FORCE_SELENIUM_TESTS", False):
                     raise
                 else:
-                    raise SkipTest(err)
+                    test_case.skipped = True
+                    #raise SkipTest(err)
             else:
                 if isinstance(test.test, nose.case.MethodTestCase):
                     test.test.test.im_self.selenium = sel
                 else:
-                    raise SkipTest("I can only assign selenium to TestCase instance; argument passing will be implemented later")
+                    test_case.skipped = True
+                    #raise SkipTest("I can only assign selenium to TestCase instance; argument passing will be implemented later")
 
     def stopTest(self, test):
         test_case = get_test_case_class(test)
-        if getattr(test_case, "selenium_start", False):
+        if getattr(test_case, "selenium_started", False):
             test.test.test.im_self.selenium.stop()
             test.test.test.im_self.selenium = None
 
@@ -494,5 +501,6 @@ class SaneTestSelectionPlugin(Plugin):
     def startTest(self, test):
         test_case = get_test_case_class(test)
         if getattr(test_case, "test_type", "unit") not in self.enabled_tests:
-            raise SkipTest(u"Test type %s not enabled" % getattr(test_case, "test_type", "unit"))
+            self.skipped = True
+            #raise SkipTest(u"Test type %s not enabled" % getattr(test_case, "test_type", "unit"))
 
