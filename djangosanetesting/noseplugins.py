@@ -113,7 +113,6 @@ class TestServerThread(threading.Thread):
 
     def run(self):
         """Sets up test server and loops over handling http requests."""
-        raise NotImplementedError()
         try:
             handler = AdminMediaHandler(WSGIHandler())
             server_address = (self.address, self.port)
