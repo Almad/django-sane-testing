@@ -4,8 +4,6 @@ from os import path
 
 working_dir = path.dirname(path.abspath(__file__))
 
-from config import *
-
 APPLICATION_ROOT=path.join(path.dirname(path.abspath(__file__)))
 
 # List of callables that know how to import templates from various sources.
@@ -56,3 +54,8 @@ TEST_DATABASE_CHARSET="utf8"
 CHERRYPY_TEST_SERVER = True
 
 LANGUAGE_CODE = 'cs'
+
+CACHE_BACKEND = 'locmem://'
+
+from config import *
+

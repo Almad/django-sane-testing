@@ -13,9 +13,12 @@ from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
 
 import nose
-from nose import SkipTest
 from nose.plugins import Plugin
 
+import djangosanetesting
+import djangosanetesting.cache
+
+#from djagnosanetesting.cache import flush_django_cache
 from djangosanetesting.selenium.driver import selenium
 
 __all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin")
@@ -28,6 +31,13 @@ def flush_urlconf(case):
     if hasattr(case, '_old_root_urlconf'):
         settings.ROOT_URLCONF = case._old_root_urlconf
         clear_url_caches()
+
+def flush_cache(case):
+    from django.contrib.contenttypes.models import ContentType
+    ContentType.objects.clear_cache()
+
+    djangosanetesting.cache.flush_django_cache()
+
 
 def get_test_case_class(nose_test):
     if isinstance(nose_test.test, nose.case.MethodTestCase):
@@ -367,10 +377,8 @@ class DjangoPlugin(Plugin):
             transaction.leave_transaction_management()
 
         flush_urlconf(self)
+        flush_cache(self)
         
-        from django.contrib.contenttypes.models import ContentType
-        ContentType.objects.clear_cache()
-
 class DjangoTranslationPlugin(Plugin):
     """
     For testcases with selenium_start set to True, connect to Selenium RC.

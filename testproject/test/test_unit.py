@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from djangosanetesting.cases import UnitTestCase
 
+from django.core.cache import cache
+
 from testapp.models import ExampleModel
 
 class TestUnitSimpleMetods(UnitTestCase):
@@ -80,6 +82,26 @@ class TestProperClashing(UnitTestCase):
     def test_bbb_inserting_another(self):
         ExampleModel.objects.create(name="test2")
         self.assert_equals(2, len(ExampleModel.objects.all()))
+
+
+class TestProperCacheClearance(UnitTestCase):
+    """
+    Test cache is cleared, i.e. not preserved between tests
+    We rely that test suite executed methods in this order:
+      (1) test_aaa_inserting_cache
+      (2) test_bbb_cache_retrieval
+
+    This is antipattern and should not be used, but it's hard to test
+    framework from within ;) Better solution would be greatly appreciated.
+    """
+
+    def test_aaa_inserting_model(self):
+        cache.set("test", "pwned")
+        self.assert_equals("pwned", cache.get("test"))
+
+    def test_bbb_inserting_another(self):
+        self.assert_equals(None, cache.get("test"))
+
 
 class TestTranslations(UnitTestCase):
     def test_czech_string_acquired(self):
