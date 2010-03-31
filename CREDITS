@@ -1,0 +1,14 @@
+Lukas Linhart <bugs@almad.net> is primary author of this library.
+
+However, code and/or inspiration has been taken from other generous
+open-source authors, listed in arbitrary order:
+
+Mikeal Rogers is an contributor to windmill. A while ago, he posted me
+a snipped on how to integrate CherryPy WSGI with Django. Later, he included
+similar thing in Windmill. Live server plugin is based on those codes.
+
+Jeff Balogh wrote a patch for Django's #12671. Snippets from this patch
+(commited in http://code.djangoproject.com/changeset/12306) were used for
+flushing cache part.
+
+
