@@ -20,12 +20,12 @@ import djangosanetesting.cache
 
 #from djagnosanetesting.cache import flush_django_cache
 from djangosanetesting.selenium.driver import selenium
+from djangosanetesting.utils import (
+    get_live_server_path,
+    DEFAULT_LIVE_SERVER_ADDRESS, DEFAULT_LIVE_SERVER_PORT
+)
 
 __all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin")
-
-DEFAULT_LIVE_SERVER_PORT=8000
-DEFAULT_LIVE_SERVER_ADDRESS='0.0.0.0'
-DEFAULT_URL_ROOT_SERVER_ADDRESS = 'localhost'
 
 def flush_urlconf(case):
     if hasattr(case, '_old_root_urlconf'):
@@ -442,10 +442,7 @@ class SeleniumPlugin(Plugin):
                       getattr(settings, "SELENIUM_HOST", 'localhost'),
                       int(getattr(settings, "SELENIUM_PORT", 4444)),
                       getattr(settings, "SELENIUM_BROWSER_COMMAND", '*opera'),
-                      getattr(settings, "SELENIUM_URL_ROOT", getattr(settings, "URL_ROOT", "http://%s:%s/" % (
-                        getattr(settings, "URL_ROOT_SERVER_ADDRESS", DEFAULT_URL_ROOT_SERVER_ADDRESS),
-                        getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT)
-                      ))),
+                      getattr(settings, "SELENIUM_URL_ROOT", get_live_server_path()),
                   )
             try:
                 sel.start()
