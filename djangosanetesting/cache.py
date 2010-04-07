@@ -50,7 +50,7 @@ def flush_django_cache():
     try:
         cache.clear()
     except AttributeError:
-        # Django < 1.2, backports
+        # Django < 1.2, backport
         backend_name = cache.__module__.split(".")[-1:][0]
         
         if backend_name not in BACKEND_CLEAR_MAP:

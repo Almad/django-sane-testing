@@ -32,7 +32,7 @@ def flush_urlconf(case):
         settings.ROOT_URLCONF = case._old_root_urlconf
         clear_url_caches()
 
-def flush_cache(case):
+def flush_cache():
     from django.contrib.contenttypes.models import ContentType
     ContentType.objects.clear_cache()
 
@@ -281,6 +281,8 @@ class DjangoPlugin(Plugin):
         if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
             getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
 
+        flush_cache()
+
         self.need_flush = False
     
     def finalize(self, *args, **kwargs):
@@ -377,7 +379,7 @@ class DjangoPlugin(Plugin):
             transaction.leave_transaction_management()
 
         flush_urlconf(self)
-        flush_cache(self)
+        flush_cache()
         
 class DjangoTranslationPlugin(Plugin):
     """
