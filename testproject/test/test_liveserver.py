@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import urllib2
 from djangosanetesting.cases import HttpTestCase, SeleniumTestCase
+from djangosanetesting.utils import get_live_server_path
 
 from testapp.models import ExampleModel
 
@@ -61,3 +62,17 @@ class TestSeleniumWorks(SeleniumTestCase):
 
     def test_czech_string_acquired_even_with_selenium(self):
         self.assert_equals(u"Přeložitelný řetězec", unicode(ExampleModel.get_translated_string()))
+
+class TestTwill(HttpTestCase):
+
+    def test_ok_retrieved(self):
+        self.twill.go("%stesttwohundred/" % get_live_server_path())
+        self.assert_equals(200, self.twill.get_code())
+
+    def test_live_server_added_when_missing(self):
+        self.twill.go("/testtwohundred/")
+        self.assert_equals(200, self.twill.get_code())
+
+    def test_missing_recognized(self):
+        self.twill.go("/this/should/never/exist/")
+        self.assert_equals(404, self.twill.get_code())

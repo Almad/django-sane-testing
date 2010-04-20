@@ -21,7 +21,7 @@ import djangosanetesting.cache
 #from djagnosanetesting.cache import flush_django_cache
 from djangosanetesting.selenium.driver import selenium
 from djangosanetesting.utils import (
-    get_live_server_path,
+    get_live_server_path, 
     DEFAULT_LIVE_SERVER_ADDRESS, DEFAULT_LIVE_SERVER_PORT
 )
 
@@ -191,7 +191,14 @@ class AbstractLiveServerPlugin(Plugin):
         # clear test client for test isolation
         if test_instance:
             test_instance.client = None
-    
+
+    def stopTest(self, test):
+        test_instance = get_test_case_instance(test)
+        if getattr(test_instance, "_twill", None):
+            from twill.commands import reset_browser
+            reset_browser()
+
+
     def finalize(self, result):
         self.stop_test_server()
 

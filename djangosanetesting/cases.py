@@ -1,4 +1,3 @@
-from django.core.urlresolvers import clear_url_caches
 from nose.tools import (
                 assert_equals,
                 assert_almost_equals,
@@ -8,6 +7,8 @@ from nose.tools import (
                 assert_false,
 )
 from nose import SkipTest
+
+from djangosanetesting.utils import twill_patched_go
 
 __all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase", "HttpTestCase", "SeleniumTestCase")
 
@@ -124,6 +125,27 @@ class HttpTestCase(DestructiveDatabaseTestCase):
     required_sane_plugins = ["django", "http"]
     http_plugin_started = False
     test_type = "http"
+
+    def __init__(self, *args, **kwargs):
+        super(HttpTestCase, self).__init__(*args, **kwargs)
+
+        self._twill = None
+
+    def get_twill(self):
+        if not self._twill:
+            try:
+                import twill
+            except ImportError:
+                raise SkipTest("Twill must be installed if You want to use it")
+
+            from twill import get_browser
+
+            self._twill = get_browser()
+            self._twill.go = twill_patched_go(self._twill.go)
+
+        return self._twill
+
+    twill = property(fget=get_twill)
     
 class SeleniumTestCase(HttpTestCase):
     """

@@ -31,3 +31,19 @@ def get_live_server_path():
         getattr(settings, "URL_ROOT_SERVER_ADDRESS", DEFAULT_URL_ROOT_SERVER_ADDRESS),
         getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT)
     ))
+
+def twill_patched_go(original_go):
+    """
+    If call is not beginning with http, prepent it with get_live_server_path
+    to allow relative calls
+    """
+    def twill_go_with_relative_paths(uri, *args, **kwargs):
+        if not uri.startswith("http"):
+            base = get_live_server_path()
+            if uri.startswith("/"):
+                base = base.rstrip("/")
+            uri = "%s%s" % (base, uri)
+        return original_go(uri, *args, **kwargs)
+
+    return twill_go_with_relative_paths
+
