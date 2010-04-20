@@ -28,6 +28,12 @@ class TestUnitSimpleMetods(UnitTestCase):
     def test_equals_false(self):
         self.assert_raises(AssertionError, lambda:self.assert_equals(1, 2))
 
+    def test_fail(self):
+        try:
+            self.fail()
+        except AssertionError:
+            pass
+
 class TestUnitAliases(UnitTestCase):
     
     def get_camel(self, name):

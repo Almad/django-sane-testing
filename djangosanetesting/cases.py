@@ -21,6 +21,8 @@ class SaneTestCase(object):
     make_translations = True
     
     SkipTest = SkipTest
+
+    failureException = AssertionError
     
     def _check_plugins(self):
         if getattr(self, 'required_sane_plugins', False):
@@ -66,7 +68,10 @@ class SaneTestCase(object):
         assert_false(*args, **kwargs)
     
     assertFalse = assert_false
-    
+
+    def fail(self, *args, **kwargs):
+        self.failureException(*args, **kwargs)
+
     def tearDown(self):
         pass
 
