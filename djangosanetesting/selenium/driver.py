@@ -1,4 +1,3 @@
-
 """
 Copyright 2006 ThoughtWorks, Inc.
 
@@ -17,8 +16,9 @@ limitations under the License.
 __docformat__ = "restructuredtext en"
 
 # This file has been automatically generated via XSL
-# Alteration has been added by Almad <bugs at almad.net> for some sane
-# testing alterations, like wait_for_element_present support
+
+# Alterations has been added by Almad <bugs at almad.net> for some sane
+# testing consistency goodies, like wait_for_element_present support
 # and it's usage before clicking et al
 
 import httplib
@@ -847,6 +847,39 @@ class selenium:
         'windowID' is the JavaScript window ID of the window to select
         """
         self.do_command("selectWindow", [windowID,])
+
+    def select_pop_up(self,windowID):
+        """
+        Simplifies the process of selecting a popup window (and does not offer
+        functionality beyond what ``selectWindow()`` already provides).
+
+        *   If ``windowID`` is either not specified, or specified as
+            "null", the first non-top window is selected. The top window is the one
+            that would be selected by ``selectWindow()`` without providing a
+            ``windowID`` . This should not be used when more than one popup
+            window is in play.
+        *   Otherwise, the window will be looked up considering
+            ``windowID`` as the following in order: 1) the "name" of the
+            window, as specified to ``window.open()``; 2) a javascript
+            variable which is a reference to a window; and 3) the title of the
+            window. This is the same ordered lookup performed by
+            ``selectWindow`` .
+
+
+
+        'windowID' is an identifier for the popup window, which can take on a                  number of different meanings
+        """
+        self.do_command("selectPopUp", [windowID,])
+
+
+    def deselect_pop_up(self):
+        """
+        Selects the main window. Functionally equivalent to using
+        ``selectWindow()`` and specifying no value for
+        ``windowID``.
+
+        """
+        self.do_command("deselectPopUp", [])
 
 
     def select_frame(self,locator):
@@ -1909,8 +1942,13 @@ class selenium:
     def use_xpath_library(self,libraryName):
         """
         Allows choice of one of the available libraries.
-        
-        'libraryName' is name of the desired library Only the following three can be chosen:   ajaxslt - Google's library   javascript - Cybozu Labs' faster library   default - The default library.  Currently the default library is ajaxslt. If libraryName isn't one of these three, then  no change will be made.
+
+        'libraryName' is name of the desired library Only the following three can be chosen:
+        *   "ajaxslt" - Google's library
+        *   "javascript-xpath" - Cybozu Labs' faster library
+        *   "default" - The default library.  Currently the default library is "ajaxslt" .
+
+         If libraryName isn't one of these three, then  no change will be made.
         """
         self.do_command("useXpathLibrary", [libraryName,])
 
@@ -1951,6 +1989,26 @@ class selenium:
         """
         return self.get_string("captureScreenshotToString", [])
 
+    def captureNetworkTraffic(self, type):
+        """
+        Returns the network traffic seen by the browser, including headers, AJAX requests, status codes, and timings. When this function is called, the traffic log is cleared, so the returned content is only the traffic seen since the last call.
+
+        'type' is The type of data to return the network traffic as. Valid values are: json, xml, or plain.
+        """
+        return self.get_string("captureNetworkTraffic", [type,])
+
+    def addCustomRequestHeader(self, key, value):
+        """
+        Tells the Selenium server to add the specificed key and value as a custom outgoing request header. This only works if the browser is configured to use the built in Selenium proxy.
+
+        'key' the header name.
+        'value' the header value.
+        """
+        return self.do_command("addCustomRequestHeader", [key,value,])
+
+    # PEP8 compat
+    capture_network_traffic = captureNetworkTraffic
+    add_custom_request_header = addCustomRequestHeader
 
     def capture_entire_page_screenshot_to_string(self,kwargs):
         """
