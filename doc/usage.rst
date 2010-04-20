@@ -99,6 +99,17 @@ Provided plugins:
 
 django.db.transaction is also available under self.transaction. Use at own discretion; you should only access it when using :class:`DestructiveDatabaseTestCase` (to make data available for server thread), messing with it when using :attr:`database_single_transaction` can cause test interaction.
 
+Since 0.6, You can use ``--persist-test-database``. This is similar to quicktest command from django-test-utils: database is not flushed at the beginning if it exists and is not dropped at the end of the test run. Useful if You are debugging single test in flush-heavy applications.
+
+.. Warning::
+
+  By definition, strange things will happen if You'll change tests You're executing. Do not overuse this feature.
+
+.. Warning::
+
+  Tested by hand, not covered by automatic tests. Please report any bugs/testcases You'll encounter.
+
+
 .. _django-live-server-plugin:
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

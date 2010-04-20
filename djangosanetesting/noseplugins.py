@@ -21,7 +21,7 @@ import djangosanetesting.cache
 #from djagnosanetesting.cache import flush_django_cache
 from djangosanetesting.selenium.driver import selenium
 from djangosanetesting.utils import (
-    get_live_server_path, 
+    get_live_server_path, test_database_exists,
     DEFAULT_LIVE_SERVER_ADDRESS, DEFAULT_LIVE_SERVER_PORT
 )
 
@@ -263,12 +263,19 @@ class DjangoPlugin(Plugin):
     """
     activation_parameter = '--with-django'
     name = 'django'
+    env_opt = 'DST_PERSIST_TEST_DATABASE'
 
     def options(self, parser, env=os.environ):
         Plugin.options(self, parser, env)
+        
+        parser.add_option(
+            "", "--persist-test-database", action="store_true",
+            default=env.get(self.env_opt), dest="persist_test_database",
+            help="Do not flush database unless neccessary [%s]" % self.env_opt)
 
     def configure(self, options, config):
         Plugin.configure(self, options, config)
+        self.persist_test_database = options.persist_test_database
     
     def begin(self):
         """
@@ -276,17 +283,18 @@ class DjangoPlugin(Plugin):
         """
         from django.test.utils import setup_test_environment
         setup_test_environment()
-        
+
         #FIXME: This should be perhaps moved to startTest and be lazy
         # for tests that do not need test database at all
         from django.db import connection
         from django.conf import settings
         self.old_name = settings.DATABASE_NAME
-        
-        connection.creation.create_test_db(verbosity=False, autoclobber=True)
 
-        if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
-            getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
+        if not self.persist_test_database or test_database_exists():
+            connection.creation.create_test_db(verbosity=False, autoclobber=True)
+
+            if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
+                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
 
         flush_cache()
 
@@ -299,8 +307,9 @@ class DjangoPlugin(Plugin):
         from django.test.utils import teardown_test_environment
         teardown_test_environment()
 
-        from django.db import connection
-        connection.creation.destroy_test_db(self.old_name, verbosity=False)
+        if not self.persist_test_database:
+            from django.db import connection
+            connection.creation.destroy_test_db(self.old_name, verbosity=False)
     
     
     def startTest(self, test):

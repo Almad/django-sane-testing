@@ -1,11 +1,10 @@
+import os
 from django.conf import settings
 
 DEFAULT_LIVE_SERVER_PROTOCOL = "http"
 DEFAULT_LIVE_SERVER_PORT = 8000
 DEFAULT_LIVE_SERVER_ADDRESS = '0.0.0.0'
 DEFAULT_URL_ROOT_SERVER_ADDRESS = 'localhost'
-
-
 
 def is_test_database():
     """
@@ -23,6 +22,18 @@ def is_test_database():
         test_database_name = TEST_DATABASE_PREFIX + settings.DATABASE_NAME
 
     return settings.DATABASE_NAME == test_database_name
+
+def test_database_exists():
+    from django.db import connection, DatabaseError
+
+    try:
+        if settings.DATABASE_ENGINE == 'sqlite3':
+            if not os.path.exists(settings.DATABASE_NAME):
+                raise DatabaseError()
+        connection.cursor()
+        return True
+    except DatabaseError, err:
+        return False
 
 def get_live_server_path():
 
