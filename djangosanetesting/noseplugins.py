@@ -197,7 +197,7 @@ class AbstractLiveServerPlugin(Plugin):
         if getattr(test_instance, "_twill", None):
             from twill.commands import reset_browser
             reset_browser()
-
+            test_instance._twill = None
 
     def finalize(self, result):
         self.stop_test_server()

@@ -22,7 +22,7 @@ Various test types were identified when taking look at :ref:`developer tests <de
 * :class:`HttpTestCase`
 * :class:`SeleniumTestCase`
 
-However, you are not *required* to inherit from those, althrough it's much advised to keep test cases intent-revealing. Job of the library is to:
+However, you are not *required* to inherit from those (except for :ref:`twill <twill-integration>`), althrough it's much advised to keep test cases intent-revealing. Job of the library is to:
 
 * Start manual transaction handling and roll it back after test
 * Flush database
@@ -47,6 +47,9 @@ When writing tests, keep in mind limitations of the individual test cases to pre
 * :class:`UnitTestCase` should not interact with database or server frontend
 * :class:`DatabaseTestCase` must run in one transaction and thus cannot be multithreaded and must not call commit
 * :class:`DestructiveDatabaseTestCase` is slow and do not have live server available (cannot test using urllib2 and friends)
+* :class:`HttpTestCase` provides all goodies except Selenium. When first encountered, live server is spawned; after that, it's as fast as :class:`DestructiveDatabaseTestCase`.
+* :class:`SeleniumTestCase` has it all (except speed).
+
 
 .. _running-tests:
 
@@ -116,6 +119,12 @@ Plugin uses following setttings variables:
   Because application logic is always executed in another thread (even when server would be single-threaded), it's not possible to use :class:`HttpTestCase`'s with in-memory databases (well, theoretically, we could do database setup in each thread and have separate databases, but that will be really nasty).
 
   Thus, if encountered with in-memory database, server is not started and :exc:`SkipTest` is raised instead.
+
+.. Warning::
+
+  Because of :ref:`twill integration <twill-integration>`, if non-empty :attr:`_twill` attribute is encountered, twill's reset_browser is called. This might be a problem if You, for whatever reason, set this attribute without interacting with it.
+
+  If it annoys You, write me and I might do something better. Until then, it's at least documented.
 
 .. _cherrypy-live-server-plugin:
 
@@ -214,12 +223,27 @@ By specifying ``TEST_DATABASE_FLUSH_COMMAND``, you can reference a function for 
 
 .. Note::
 
-    When using django-sane-testing with south (in INSTALLED_APPS), You're now required to write You own command that will call both "syncdb" and "migrate". Sane-testing will have one for future releases.    
+    When using django-sane-testing with south (in INSTALLED_APPS), You're now required to write You own command that will call both "syncdb" and "migrate". Sane-testing will have one for future releases.
 
 Also, create_test_db (which is needed to be run at the very beginning) emits post_sync signal. Thus, you also probably want to set ``FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB`` to True.
+
+.. _twill-integration:
+
+------------------
+Twill integration
+------------------
+
+`Twill`_ is simple browser-like library for page browsing and tests. For :class:`HttpTestCase` and all inherited TestCases, :attr:`self.twill` is available with twill's ``get_browser()``. It's setted up lazily and is resetted and purged after test case.
+
+Browser has patched :attr:`go()` method: You can pass relative paths to it.
+
+.. Note::
+
+  Twill is using standard HTTP instead of WSGI intercept. This might be available in the future as an option, if there is a demand or patch written.
 
 .. _django-sane-testing: http://devel.almad.net/trac/django-sane-testing/
 .. _Selenium: http://seleniumhq.org/
 .. _Selenium RC: http://seleniumhq.org/projects/remote-control/
 .. _CherryPy: http://www.cherrypy.org/
+.. _Twill: http://twill.idyll.org/
 
