@@ -57,5 +57,7 @@ LANGUAGE_CODE = 'cs'
 
 CACHE_BACKEND = 'locmem://'
 
+DST_FLUSH_DJANGO_CACHE = True
+
 from config import *
 

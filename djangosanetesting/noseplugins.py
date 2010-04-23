@@ -28,12 +28,15 @@ from djangosanetesting.utils import (
 
 __all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin")
 
-def flush_cache():
+def flush_cache(test_case=None):
     from django.contrib.contenttypes.models import ContentType
     ContentType.objects.clear_cache()
 
-    djangosanetesting.cache.flush_django_cache()
+    from django.conf import settings
 
+    if (test_case and hasattr(test_case, "flush_django_cache") and test_case.flush_django_cache) \
+        or (not hasattr(test_case, "flush_django_cache") and getattr(settings, "DST_FLUSH_DJANGO_CACHE", False)):
+        djangosanetesting.cache.flush_django_cache()
 
 def get_test_case_class(nose_test):
     if isinstance(nose_test.test, nose.case.MethodTestCase):
@@ -394,7 +397,7 @@ class DjangoPlugin(Plugin):
         if hasattr(test_case, '_old_root_urlconf'):
             settings.ROOT_URLCONF = test_case._old_root_urlconf
             clear_url_caches()
-        flush_cache()
+        flush_cache(test_case)
         
 class DjangoTranslationPlugin(Plugin):
     """
