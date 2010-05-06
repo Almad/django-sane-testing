@@ -155,3 +155,12 @@ class TestMocking(UnitTestCase):
     @mock_settings("NONSENSICAL_SETTING_ATTRIBUTE_FOR_MOCK_TESTING", "pwned!")
     def test_existing_setting_mocked(self):
         self.assert_equals("pwned!", settings.NONSENSICAL_SETTING_ATTRIBUTE_FOR_MOCK_TESTING)
+
+class TestMockingCleansAfterItself(UnitTestCase):
+    @mock_settings("INSANE_ATTRIBUTE_THAT_SHOULD_NOT_BE_PRESENT", "Cthulhed!")
+    def test_aaa_mocked(self):
+        self.assert_equals("Cthulhed!", settings.INSANE_ATTRIBUTE_THAT_SHOULD_NOT_BE_PRESENT)
+
+    def test_bbb_attribute_not_present(self):
+        self.assert_false(hasattr(settings, "INSANE_ATTRIBUTE_THAT_SHOULD_NOT_BE_PRESENT"))
+    

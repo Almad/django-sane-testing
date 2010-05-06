@@ -1,4 +1,5 @@
 import os
+from functools import wraps
 from django.conf import settings
 
 DEFAULT_LIVE_SERVER_PROTOCOL = "http"
@@ -60,8 +61,9 @@ def twill_patched_go(original_go):
 
 def mock_settings(settings_attribute, value):
     def wrapper(f):
+        @wraps(f)
         def wrapped(*args, **kwargs):
-            if hasattr(settings, settings_attribute):
+            if not hasattr(settings, settings_attribute):
                 delete = True
             else:
                 delete = False
@@ -69,12 +71,16 @@ def mock_settings(settings_attribute, value):
 
             setattr(settings, settings_attribute, value)
 
-            retval = f(*args, **kwargs)
-
-            if delete:
-                delattr(settings, settings_attribute)
-            else:
-                setattr(settings, settings_attribute, original_value)
+            try:
+                retval = f(*args, **kwargs)
+            finally:
+                if delete:
+                    # could not delete directly as LazyObject does not implement
+                    # __delattr__ properly
+                    if settings._wrapped:
+                        delattr(settings._wrapped, settings_attribute)
+                else:
+                    setattr(settings, settings_attribute, original_value)
 
             return retval
         return wrapped
