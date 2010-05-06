@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from djangosanetesting.cases import UnitTestCase
+from djangosanetesting.utils import mock_settings
 
 from django.core.cache import cache
+from django.conf import settings
 
 from testapp.models import ExampleModel
 
@@ -137,3 +139,19 @@ class TestNotDefaultTranslations(UnitTestCase):
 def function_test():
     # just to verify we work with them
     assert True is True
+
+class TestMocking(UnitTestCase):
+
+    def test_sanity_for_missing_setting_present(self):
+        self.assert_false(hasattr(settings, "INSANE_ATTRIBUTE_THAT_SHOULD_NOT_BE_PRESENT"))
+    
+    def test_expected_setting_present(self):
+        self.assert_equals("owned", settings.NONSENSICAL_SETTING_ATTRIBUTE_FOR_MOCK_TESTING)
+
+    @mock_settings("INSANE_ATTRIBUTE_THAT_SHOULD_NOT_BE_PRESENT", "Cthulhed!")
+    def test_setting_mocked(self):
+        self.assert_equals("Cthulhed!", settings.INSANE_ATTRIBUTE_THAT_SHOULD_NOT_BE_PRESENT)
+
+    @mock_settings("NONSENSICAL_SETTING_ATTRIBUTE_FOR_MOCK_TESTING", "pwned!")
+    def test_existing_setting_mocked(self):
+        self.assert_equals("pwned!", settings.NONSENSICAL_SETTING_ATTRIBUTE_FOR_MOCK_TESTING)

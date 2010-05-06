@@ -57,5 +57,7 @@ LANGUAGE_CODE = 'cs'
 
 CACHE_BACKEND = 'locmem://'
 
+NONSENSICAL_SETTING_ATTRIBUTE_FOR_MOCK_TESTING = "owned"
+
 from config import *
 

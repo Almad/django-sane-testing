@@ -58,3 +58,25 @@ def twill_patched_go(original_go):
 
     return twill_go_with_relative_paths
 
+def mock_settings(settings_attribute, value):
+    def wrapper(f):
+        def wrapped(*args, **kwargs):
+            if hasattr(settings, settings_attribute):
+                delete = True
+            else:
+                delete = False
+                original_value = getattr(settings, settings_attribute)
+
+            setattr(settings, settings_attribute, value)
+
+            retval = f(*args, **kwargs)
+
+            if delete:
+                delattr(settings, settings_attribute)
+            else:
+                setattr(settings, settings_attribute, original_value)
+
+            return retval
+        return wrapped
+    return wrapper
+
