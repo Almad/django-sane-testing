@@ -11,6 +11,7 @@ from time import sleep
 from django.core.management import call_command
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
+from django.core.urlresolvers import clear_url_caches
 
 import nose
 from nose.plugins import Plugin
@@ -27,17 +28,15 @@ from djangosanetesting.utils import (
 
 __all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin")
 
-def flush_urlconf(case):
-    if hasattr(case, '_old_root_urlconf'):
-        settings.ROOT_URLCONF = case._old_root_urlconf
-        clear_url_caches()
-
-def flush_cache():
+def flush_cache(test_case=None):
     from django.contrib.contenttypes.models import ContentType
     ContentType.objects.clear_cache()
 
-    djangosanetesting.cache.flush_django_cache()
+    from django.conf import settings
 
+    if (test_case and hasattr(test_case, "flush_django_cache") and test_case.flush_django_cache) \
+        or (not hasattr(test_case, "flush_django_cache") and getattr(settings, "DST_FLUSH_DJANGO_CACHE", False)):
+        djangosanetesting.cache.flush_django_cache()
 
 def get_test_case_class(nose_test):
     if isinstance(nose_test.test, nose.case.MethodTestCase):
@@ -387,6 +386,7 @@ class DjangoPlugin(Plugin):
         After test is run, clear urlconf and caches
         """
         from django.db import transaction
+        from django.conf import settings
         
         test_case = get_test_case_class(test)
         
@@ -394,8 +394,10 @@ class DjangoPlugin(Plugin):
             transaction.rollback()
             transaction.leave_transaction_management()
 
-        flush_urlconf(self)
-        flush_cache()
+        if hasattr(test_case, '_old_root_urlconf'):
+            settings.ROOT_URLCONF = test_case._old_root_urlconf
+            clear_url_caches()
+        flush_cache(test_case)
         
 class DjangoTranslationPlugin(Plugin):
     """
