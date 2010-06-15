@@ -46,13 +46,13 @@ BACKEND_CLEAR_MAP = {
 def get_cache_class():
     return ''
 
-def flush_django_cache():
+def flush_django_cache(backend_name=None):
     try:
         cache.clear()
     except AttributeError:
         # Django < 1.2, backport
-        backend_name = cache.__module__.split(".")[-1:][0]
-        
+        backend_name = backend_name or cache.__module__.split(".")[-1:][0]
+
         if backend_name not in BACKEND_CLEAR_MAP:
             raise ValueError("Don't know how to clear cache for %s backend" % backend_name)
 
