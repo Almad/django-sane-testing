@@ -59,6 +59,38 @@ def twill_patched_go(original_go):
 
     return twill_go_with_relative_paths
 
+def twill_xpath_go(browser, original_go):
+    """
+    If call is not beginning with http, prepent it with get_live_server_path
+    to allow relative calls
+    """
+
+    from lxml.etree import XPathEvalError
+    from lxml.html import document_fromstring
+
+    from twill.errors import TwillException
+
+
+    def visit_with_xpath(xpath):
+        tree = document_fromstring(browser.get_html())
+
+        try:
+            result = tree.xpath(xpath)
+        except XPathEvalError:
+            raise TwillException("Bad xpath" % xpath)
+
+        if len(result) == 0:
+            raise TwillException("No match")
+        elif len(result) > 1:
+            raise TwillException("xpath returned multiple hits! Cannot visit.")
+
+        if not result[0].get("href"):
+            raise TwillException("xpath match do not have 'href' attribute")
+
+        return original_go(result[0].get("href"))
+
+    return visit_with_xpath
+
 def mock_settings(settings_attribute, value):
     def wrapper(f):
         @wraps(f)

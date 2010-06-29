@@ -8,7 +8,7 @@ from nose.tools import (
 )
 from nose import SkipTest
 
-from djangosanetesting.utils import twill_patched_go
+from djangosanetesting.utils import twill_patched_go, twill_xpath_go
 
 __all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase", "HttpTestCase", "SeleniumTestCase")
 
@@ -142,10 +142,17 @@ class HttpTestCase(DestructiveDatabaseTestCase):
 
             self._twill = get_browser()
             self._twill.go = twill_patched_go(self._twill.go)
+            self._twill.go_xpath = twill_xpath_go(browser=self._twill, original_go=self._twill.go)
+
+            from twill import commands
+            self._twill.commands = commands
 
         return self._twill
 
     twill = property(fget=get_twill)
+
+    def assert_code(self, code):
+        self.assert_equals(int(code), self.twill.get_code())
     
 class SeleniumTestCase(HttpTestCase):
     """
