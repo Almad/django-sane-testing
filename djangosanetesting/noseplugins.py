@@ -292,6 +292,9 @@ class DjangoPlugin(Plugin):
         if not self.persist_test_database or test_database_exists():
             connection.creation.create_test_db(verbosity=False, autoclobber=True)
 
+            if 'south' in settings.INSTALLED_APPS and getattr(settings, 'DST_RUN_SOUTH_MIGRATIONS', True):
+                call_command('migrate')
+
             if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
                 getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
 
