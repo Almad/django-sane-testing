@@ -1,4 +1,3 @@
-syntax: glob
 *.pyc
 *.ini
 *.swp
@@ -10,9 +9,13 @@ syntax: glob
 *.patch
 *~
 *.egg-info*
-testproject/config.py
+/testproject/config.py
+/testonetwoproject/config.py
 build
 dist
 MANIFEST
-doc/.build
+/docs/.build
+/bin/
+/include/
+/lib*
 nbproject

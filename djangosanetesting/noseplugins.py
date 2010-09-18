@@ -54,8 +54,12 @@ def enable_test(test_case, plugin_attribute):
     if not getattr(test_case, plugin_attribute, False):
         setattr(test_case, plugin_attribute, True)
 
-def flush_database(test_case):
-    call_command('flush', verbosity=0, interactive=False)
+def flush_database(test_case, database=None):
+    if database is None:
+        from django.db import DEFAULT_DB_ALIAS
+        database = DEFAULT_DB_ALIAS
+
+    call_command('flush', verbosity=0, interactive=False, database=database)
 
 #####
 ### Okey, this is hack because of #14, or Django's #3357
@@ -276,7 +280,37 @@ class DjangoPlugin(Plugin):
     def configure(self, options, config):
         Plugin.configure(self, options, config)
         self.persist_test_database = options.persist_test_database
-    
+
+    def setup_databases(self, verbosity, autoclobber, **kwargs):
+        # Taken from Django 1.2 code, (C) respective Django authors
+        from django.db import connections
+        old_names = []
+        mirrors = []
+        for alias in connections:
+            connection = connections[alias]
+            # If the database is a test mirror, redirect it's connection
+            # instead of creating a test database.
+            if connection.settings_dict['TEST_MIRROR']:
+                mirrors.append((alias, connection))
+                mirror_alias = connection.settings_dict['TEST_MIRROR']
+                connections._connections[alias] = connections[mirror_alias]
+            else:
+                old_names.append((connection, connection.settings_dict['NAME']))
+                connection.creation.create_test_db(verbosity=verbosity, autoclobber=autoclobber)
+        return old_names, mirrors
+
+    def teardown_databases(self, old_config, verbosity, **kwargs):
+        # Taken from Django 1.2 code, (C) respective Django authors
+        from django.db import connections
+        old_names, mirrors = old_config
+        # Point all the mirrors back to the originals
+        for alias, connection in mirrors:
+            connections._connections[alias] = connection
+        # Destroy all the non-mirror databases
+        for connection, old_name in old_names:
+            connection.creation.destroy_test_db(old_name, verbosity)
+
+
     def begin(self):
         """
         Before running database, initialize database et al, so noone will complain
@@ -286,18 +320,20 @@ class DjangoPlugin(Plugin):
 
         #FIXME: This should be perhaps moved to startTest and be lazy
         # for tests that do not need test database at all
-        from django.db import connection
+        from django.db import connection, connections
         from django.conf import settings
         self.old_name = settings.DATABASE_NAME
 
         if not self.persist_test_database or test_database_exists():
-            connection.creation.create_test_db(verbosity=False, autoclobber=True)
+            #connection.creation.create_test_db(verbosity=False, autoclobber=True)
+            self.old_config = self.setup_databases(verbosity=False, autoclobber=True)
 
-            if 'south' in settings.INSTALLED_APPS and getattr(settings, 'DST_RUN_SOUTH_MIGRATIONS', True):
-                call_command('migrate')
+            for db in connections:
+                if 'south' in settings.INSTALLED_APPS and getattr(settings, 'DST_RUN_SOUTH_MIGRATIONS', True):
+                    call_command('migrate', database=db)
 
-            if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
-                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
+                if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
+                    getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
 
         flush_cache()
 
@@ -311,8 +347,9 @@ class DjangoPlugin(Plugin):
         teardown_test_environment()
 
         if not self.persist_test_database:
-            from django.db import connection
-            connection.creation.destroy_test_db(self.old_name, verbosity=False)
+            self.teardown_databases(self.old_config, verbosity=False)
+#            from django.db import connection
+#            connection.creation.destroy_test_db(self.old_name, verbosity=False)
     
     
     def startTest(self, test):
@@ -325,7 +362,7 @@ class DjangoPlugin(Plugin):
         ### the context?
         #####
         
-        from django.db import transaction
+        from django.db import transaction, DEFAULT_DB_ALIAS, connections
         from django.test.testcases import call_command
         from django.core import mail
         from django.conf import settings
@@ -354,8 +391,14 @@ class DjangoPlugin(Plugin):
         test_case.transaction = transaction
         self.commits_could_be_used = False
 
+        if getattr(test_case, 'multi_db', False):
+            databases = connections
+        else:
+            databases = [DEFAULT_DB_ALIAS]
+
         if getattr(test_case, "database_flush", True):
-            getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
+            for db in databases:
+                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
             # it's possible that some garbage will be left after us, flush next time
             self.need_flush = True
             # commits are allowed during tests
@@ -363,7 +406,8 @@ class DjangoPlugin(Plugin):
             
         # previous test needed flush, clutter could have stayed in database
         elif self.previous_test_needed_flush is True:
-            getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self)
+            for db in databases:
+                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
             self.need_flush = False
         
         # otherwise we should have done our job
@@ -382,7 +426,8 @@ class DjangoPlugin(Plugin):
                 commit = True
             else:
                 commit = False
-            call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : commit})
+            for db in databases:
+                call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : commit, 'database' : db})
 
  
     def stopTest(self, test):
