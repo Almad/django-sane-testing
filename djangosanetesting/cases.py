@@ -83,7 +83,23 @@ class UnitTestCase(SaneTestCase):
     """
     no_database_interaction = True
     test_type = "unit"
-    
+
+
+    # undocumented client: can be only used for views that are *guaranteed*
+    # not to interact with models
+    def get_django_client(self):
+        from django.test import Client
+        if not getattr(self, '_django_client', False):
+            self._django_client = Client()
+        return self._django_client
+
+    def set_django_client(self, value):
+        self._django_client = value
+
+    client = property(fget=get_django_client, fset=set_django_client)
+
+
+
 class DatabaseTestCase(SaneTestCase):
     """
     Tests using database for models in simple: rollback on teardown and we're out.

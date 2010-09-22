@@ -71,6 +71,12 @@ class TestUnitAliases(UnitTestCase):
     def test_get_camel_invalid_prefix(self):
         self.assert_raises(ValueError, lambda:self.get_camel("_prefix"))
 
+
+class TestFeatures(UnitTestCase):
+
+    def test_even_unit_can_access_views(self):
+        self.assert_equals(200, self.client.get("/testtwohundred/").status_code)
+
 class TestProperClashing(UnitTestCase):
     """
     Test we're getting expected failures when working with db,
