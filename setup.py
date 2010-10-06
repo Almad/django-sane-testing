@@ -26,7 +26,7 @@ setup(
     Thus, there is a way to start HTTP server for non-WSGI testing - like using Selenium or Windmill.
     Selenium has also been made super easy - just start --with-selenium, inherit from SeleniumTestCase and use self.selenium.
     Package is documented - see docs/ or http://getthedocs.org/Almad/djangosanetesting.
-    '''
+    ''',
     packages = ['djangosanetesting', 'djangosanetesting.selenium'],
     scripts = [],
     requires = ['Django (>=1.0)', 'nose (>=0.10)'],
