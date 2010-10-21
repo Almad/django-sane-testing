@@ -13,6 +13,11 @@ from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
 from django.core.urlresolvers import clear_url_caches
 
+try:
+    from django.db import DEFAULT_DB_ALIAS
+except ImportError:
+    DEFAULT_DB_ALIAS = 'default'
+
 import nose
 from nose.plugins import Plugin
 
@@ -282,26 +287,37 @@ class DjangoPlugin(Plugin):
         self.persist_test_database = options.persist_test_database
 
     def setup_databases(self, verbosity, autoclobber, **kwargs):
-        # Taken from Django 1.2 code, (C) respective Django authors
-        from django.db import connections
+        # Taken from Django 1.2 code, (C) respective Django authors. Modified for backward compatibility by me
+        try:
+            from django.db import connections
+        except ImportError:
+            from django.db import connection
+            connections = {DEFAULT_DB_ALIAS : connection}
         old_names = []
         mirrors = []
         for alias in connections:
             connection = connections[alias]
             # If the database is a test mirror, redirect it's connection
             # instead of creating a test database.
-            if connection.settings_dict['TEST_MIRROR']:
+            if 'TEST_MIRROR' in connection.settings_dict and connection.settings_dict['TEST_MIRROR']:
                 mirrors.append((alias, connection))
                 mirror_alias = connection.settings_dict['TEST_MIRROR']
                 connections._connections[alias] = connections[mirror_alias]
             else:
-                old_names.append((connection, connection.settings_dict['NAME']))
+                if 'NAME' in connection.settings_dict:
+                    old_names.append((connection, connection.settings_dict['NAME']))
+                else:
+                    old_names.append((connection, connection.settings_dict['DATABASE_NAME']))
                 connection.creation.create_test_db(verbosity=verbosity, autoclobber=autoclobber)
         return old_names, mirrors
 
     def teardown_databases(self, old_config, verbosity, **kwargs):
         # Taken from Django 1.2 code, (C) respective Django authors
-        from django.db import connections
+        try:
+            from django.db import connections
+        except ImportError:
+            from django.db import connection
+            connections = {DEFAULT_DB_ALIAS : connection}
         old_names, mirrors = old_config
         # Point all the mirrors back to the originals
         for alias, connection in mirrors:
@@ -320,9 +336,14 @@ class DjangoPlugin(Plugin):
 
         #FIXME: This should be perhaps moved to startTest and be lazy
         # for tests that do not need test database at all
-        from django.db import connection, connections
+        from django.db import connection
         from django.conf import settings
         self.old_name = settings.DATABASE_NAME
+
+        try:
+            from django.db import connections
+        except ImportError:
+            connections = {DEFAULT_DB_ALIAS : connection}
 
         if not self.persist_test_database or test_database_exists():
             #connection.creation.create_test_db(verbosity=False, autoclobber=True)
@@ -362,7 +383,13 @@ class DjangoPlugin(Plugin):
         ### the context?
         #####
         
-        from django.db import transaction, DEFAULT_DB_ALIAS, connections
+        from django.db import transaction, connection
+        try:
+            from django.db import DEFAULT_DB_ALIAS, connections
+            MULTIDB_SUPPORT = True
+        except ImportError:
+            MULTIDB_SUPPORT = False
+
         from django.test.testcases import call_command
         from django.core import mail
         from django.conf import settings
@@ -392,9 +419,16 @@ class DjangoPlugin(Plugin):
         self.commits_could_be_used = False
 
         if getattr(test_case, 'multi_db', False):
-            databases = connections
+            if not MULTIDB_SUPPORT:
+                test_case.skipped = True
+                return
+            else:
+                databases = connections
         else:
-            databases = [DEFAULT_DB_ALIAS]
+            if MULTIDB_SUPPORT:
+                databases = [DEFAULT_DB_ALIAS]
+            else:
+                databases = [connection]
 
         if getattr(test_case, "database_flush", True):
             for db in databases:
