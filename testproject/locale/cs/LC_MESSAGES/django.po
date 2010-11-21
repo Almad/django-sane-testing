@@ -20,4 +20,4 @@ msgstr ""
 
 #: testapp/models.py:9
 msgid "Translatable string"
-msgstr ""
+msgstr "Přeložitelný řetězec"

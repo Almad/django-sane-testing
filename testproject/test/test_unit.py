@@ -138,7 +138,7 @@ class TestTranslations(UnitTestCase):
 
 class TestNotDefaultTranslations(UnitTestCase):
     translation_language_code = 'de'
-    def test_english_string_acquired(self):
+    def test_german_translated_string_acquired(self):
         self.assert_equals(u"Ersetzbare Zeichenkette", unicode(ExampleModel.get_translated_string()))
 
 
