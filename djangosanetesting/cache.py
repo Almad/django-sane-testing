@@ -4,13 +4,12 @@ Used to somehow partially backport http://code.djangoproject.com/ticket/12671
 to Django < 1.2
 """
 
-from django.db import connection
-
 import shutil
 
 ###### clear functions
 
 def clear_db(cache):
+    from django.db import connection
     cursor = connection.cursor()
     cursor.execute('DELETE FROM %s' % cache._table)
 
