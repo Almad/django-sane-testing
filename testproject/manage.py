@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # insert parent directory on first place of sys.path, so it's prefferred over installed version
 import sys, os, os.path

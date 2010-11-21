@@ -29,7 +29,7 @@ setup(
     ''',
     packages = ['djangosanetesting', 'djangosanetesting.selenium'],
     scripts = [],
-    requires = ['Django (>=1.0)', 'nose (>=0.10)'],
+    requires = ['Django (>=1.1)', 'nose (>=0.10)'],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
