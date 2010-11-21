@@ -64,7 +64,7 @@ class TestFixturesLoadedProperly(HttpTestCase):
     fixtures = ["random_model_for_testing"]
 
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(TestFixturesLoadedProperly, self).__init__(*args, **kwargs)
         # I did not found how to load those variables from django.conf.settings,
         # so I must just hardcode them. Advices welcomed.
         self.host = 'localhost'
