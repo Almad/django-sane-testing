@@ -1,6 +1,5 @@
 import os
 from functools import wraps
-from django.conf import settings
 
 DEFAULT_LIVE_SERVER_PROTOCOL = "http"
 DEFAULT_LIVE_SERVER_PORT = 8000
@@ -12,6 +11,7 @@ def is_test_database():
     Return whether we're using test database. Can be used to determine if we're
     running tests.
     """
+    from django.conf import settings
 
     # This is hacky, but fact we're running tests is determined by _create_test_db call.
     # We'll assume usage of it if assigned to settings.DATABASE_NAME
@@ -37,6 +37,7 @@ def test_database_exists():
         return False
 
 def get_live_server_path():
+    from django.conf import settings
 
     return getattr(settings, "URL_ROOT", "%s://%s:%s/" % (
         getattr(settings, "LIVE_SERVER_PROTOCOL", DEFAULT_LIVE_SERVER_PROTOCOL),
@@ -92,6 +93,8 @@ def twill_xpath_go(browser, original_go):
     return visit_with_xpath
 
 def mock_settings(settings_attribute, value):
+    from django.conf import settings
+    
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwargs):

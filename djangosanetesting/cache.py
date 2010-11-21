@@ -4,7 +4,6 @@ Used to somehow partially backport http://code.djangoproject.com/ticket/12671
 to Django < 1.2
 """
 
-from django.core.cache import cache
 from django.db import connection
 
 import shutil
@@ -47,7 +46,11 @@ def get_cache_class():
     return ''
 
 def flush_django_cache(cache_instance=None):
-    cache_instance = cache_instance or cache
+    cache_instance = cache_instance
+    if not cache_instance:
+        from django.core.cache import cache
+        cache_instance = cache
+
     try:
         cache_instance.clear()
     except AttributeError:
