@@ -1,10 +1,10 @@
 Django: Sane Testing
 ========================
 
-Tools for allowing developers to do TDD with Django.
+django-sane-testing integrates Django with Nose testing framework. Goal is to provide nose goodies to Django testing and to support feasible integration or functional testing of Django applications, for example by providing more control over transaction/database handling.
 
-Integrates Nose, Django, Selenium and more.
+Thus, there is a way to start HTTP server for non-WSGI testing - like using Selenium or Windmill.
 
-Documentation is in Sphinx under doc/.
+Selenium has also been made super easy - just start --with-selenium, inherit from SeleniumTestCase and use self.selenium.
 
-
+Package is documented - see docs/ or http://getthedocs.org/Almad/djangosanetesting.

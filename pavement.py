@@ -3,14 +3,11 @@
 from paver.easy import *
 from paver.setuputils import setup
 
-project_dir = 'djangosanetesting'
-name = 'djangosanetesting'
-
-version = '0.5.7'
+VERSION = '0.5.7'
 
 setup(
-    name = name,
-    version = version,
+    name = 'djangosanetesting',
+    version = VERSION,
     url = 'http://devel.almad.net/trac/django-sane-testing/',
     author = 'Lukas Linhart',
     author_email = 'bugs@almad.net',
