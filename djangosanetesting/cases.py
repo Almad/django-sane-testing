@@ -9,6 +9,8 @@ from nose.tools import (
 from nose import SkipTest
 
 from djangosanetesting.utils import twill_patched_go, twill_xpath_go
+import urllib2
+import sys
 
 __all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase", "HttpTestCase", "SeleniumTestCase")
 
@@ -169,7 +171,32 @@ class HttpTestCase(DestructiveDatabaseTestCase):
 
     def assert_code(self, code):
         self.assert_equals(int(code), self.twill.get_code())
-    
+
+    def urlopen(self, *args, **kwargs):
+        """
+        Wrap for the urlopen function from urllib2
+        prints django's traceback if server responds with 500
+        """
+        try:
+            return urllib2.urlopen(*args, **kwargs)
+        except urllib2.HTTPError, err:
+            if err.code == 500:
+                record = False
+                for one in err.readlines():
+                    if one.strip().startswith('<textarea ') and one.find('id="traceback_area"'):
+                        record = True
+                        continue
+                    if record and one.strip() == '</textarea>':
+                        break
+                    elif record:
+                        sys.stdout.write(one)
+
+                err.close()
+                if not record:
+                    sys.stdout.write("Django's traceback not found")
+            raise err
+
+
 class SeleniumTestCase(HttpTestCase):
     """
     Connect to selenium RC and provide it as instance attribute.

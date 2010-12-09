@@ -14,16 +14,11 @@ class TestLiveServerRunning(HttpTestCase):
         self.port = 8000
     
     def get_ok(self):
-        try:
-            self.assertEquals(u'200 OK', urllib2.urlopen('http://%(host)s:%(port)s/testtwohundred/' % {
-                'host' : self.host,
-                'port' : self.port
-            }).read())
-        except urllib2.HTTPError, err:
-            if err.fp:
-                print err.fp.read()
-            raise
-    
+        self.assertEquals(u'200 OK', self.urlopen('http://%(host)s:%(port)s/testtwohundred/' % {
+            'host' : self.host,
+            'port' : self.port
+        }).read())
+
     def test_http_retrievable(self):
         return self.get_ok()
     
@@ -39,7 +34,7 @@ class TestLiveServerRunning(HttpTestCase):
         # when repeating request often...
         for i in xrange(1, 10):
             try:
-                response = urllib2.urlopen(url='http://%(host)s:%(port)s/return_not_authorized/' % {
+                response = self.urlopen(url='http://%(host)s:%(port)s/return_not_authorized/' % {
                     'host' : self.host,
                     'port' : self.port
                 },

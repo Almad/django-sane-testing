@@ -74,7 +74,7 @@ class TestFixturesLoadedProperly(HttpTestCase):
         self.assert_equals(2, len(ExampleModel.objects.all()))
 
     def test_available_in_another_thread(self):
-        self.assertEquals(u'200 OK', urllib2.urlopen('http://%(host)s:%(port)s/assert_two_example_models/' % {
+        self.assertEquals(u'200 OK', self.urlopen('http://%(host)s:%(port)s/assert_two_example_models/' % {
             'host' : self.host,
             'port' : self.port
         }).read())
