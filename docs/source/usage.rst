@@ -246,7 +246,9 @@ Twill integration
 
 `Twill`_ is simple browser-like library for page browsing and tests. For :class:`HttpTestCase` and all inherited TestCases, :attr:`self.twill` is available with twill's ``get_browser()``. It's setted up lazily and is resetted and purged after test case.
 
-Browser has patched :attr:`go()` method: You can pass relative paths to it. Also, use can use :attr:`go_xpath()` to use lxml-based XPath to specify hyperlink on page to visit.
+Browser has patched :attr:`go()` method: You can pass relative paths to it. Besides, it will throw :class:`HTTPError` (from urllib2), if server serves page with status 500.
+
+Also, use can use :attr:`go_xpath()` to use lxml-based XPath to specify hyperlink on page to visit.
 
 :attr:`self.twill` also has :attr:`commands` attribute, equal to :attr:`twill.commands`.
 

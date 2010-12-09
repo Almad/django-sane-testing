@@ -6,7 +6,7 @@ from djangosanetesting.utils import mock_settings
 from testapp.models import ExampleModel
 
 import django
- 
+
 class TestDatabaseRollbackCase(DatabaseTestCase):
     """
     Check we got proper rollback when trying to play with models.

@@ -8,7 +8,7 @@ from nose.tools import (
 )
 from nose import SkipTest
 
-from djangosanetesting.utils import twill_patched_go, twill_xpath_go
+from djangosanetesting.utils import twill_patched_go, twill_xpath_go, extract_django_traceback
 import urllib2
 import sys
 
@@ -159,7 +159,7 @@ class HttpTestCase(DestructiveDatabaseTestCase):
             from twill import get_browser
 
             self._twill = get_browser()
-            self._twill.go = twill_patched_go(self._twill.go)
+            self._twill.go = twill_patched_go(browser=self._twill, original_go=self._twill.go)
             self._twill.go_xpath = twill_xpath_go(browser=self._twill, original_go=self._twill.go)
 
             from twill import commands
@@ -181,20 +181,9 @@ class HttpTestCase(DestructiveDatabaseTestCase):
             return urllib2.urlopen(*args, **kwargs)
         except urllib2.HTTPError, err:
             if err.code == 500:
-                record = False
-                for one in err.readlines():
-                    if one.strip().startswith('<textarea ') and one.find('id="traceback_area"'):
-                        record = True
-                        continue
-                    if record and one.strip() == '</textarea>':
-                        break
-                    elif record:
-                        sys.stdout.write(one)
-
-                err.close()
-                if not record:
-                    sys.stdout.write("Django's traceback not found")
-            raise err
+                raise extract_django_traceback(http_error=err)
+            else:
+                raise err
 
 
 class SeleniumTestCase(HttpTestCase):

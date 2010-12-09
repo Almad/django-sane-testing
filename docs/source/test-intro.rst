@@ -59,6 +59,8 @@ While Django's `TestClient <http://docs.djangoproject.com/en/dev/topics/testing/
 
 If this is not enough (and might not be, Django server is still kinda incomplete), you can have your Django served with CherryPy's production-ready, multi-threaded server. Just set ``CHERRYPY_TEST_SERVER=True`` in your settings and enjoy server you can repeatably connect to.
 
+For HTTP requests, use included function urlopen (wrapper for eponymous function from urllib2), which can handles server-side traceback.
+
 ----------------------
 Web tests
 ----------------------

@@ -23,7 +23,7 @@ Library supports following:
 * Nose integration (load plugins and try ``noserun``)
 * `Django`_ integration (``./manage.py test`` and boo ya)
 * True unittests (no database interaction, no handling needed = SPEED)
-* HTTP tests (you can test with `urllib2 <http://docs.python.org/library/urllib2.html>`_)
+* HTTP tests (has included wrapper for urlopen from `urllib2 <http://docs.python.org/library/urllib2.html>`_)
 * Transactional database tests (everything in one transaction, no database flush)
 * `Selenium`_ RC integration (our pages needs to be tested with browser)
 * `CherryPy`_ can be used instead of `Django`_ 's WSGI (when you need usable server	)
