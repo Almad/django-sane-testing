@@ -3,7 +3,7 @@
 from paver.easy import *
 from paver.setuputils import setup
 
-VERSION = '0.5.8'
+VERSION = '0.5.9'
 name = 'djangosanetesting'
 
 setup(

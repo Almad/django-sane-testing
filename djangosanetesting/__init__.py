@@ -1,6 +1,6 @@
 
-__version__ = (0, 5, 7, '')
-__versionstr__ = '0.5.7'
+__version__ = (0, 5, 9, '')
+__versionstr__ = '0.5.9'
 
 from djangosanetesting.cases import *
 from djangosanetesting.testrunner import *

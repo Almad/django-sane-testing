@@ -3,6 +3,7 @@ include README.rst
 include MANIFEST.in
 include LICENSE
 include CREDITS
+include setup.py
 include pavement.py
 include paver-minilib.zip
 recursive-include docs *
