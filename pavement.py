@@ -23,6 +23,7 @@ setup(
     ''',
     packages = ['djangosanetesting', 'djangosanetesting.selenium'],
     scripts = [],
+    data_files = [('.', './paver-minilib.zip'),],
     requires = ['Django (>=1.1)', 'nose (>=0.10)'],
     classifiers=[
         "Development Status :: 4 - Beta",
