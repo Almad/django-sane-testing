@@ -18,16 +18,18 @@ SITE_ID =1
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = "sqlite3"
-DATABASE_NAME = "/home/almad/tmp/keykeeper.db"
-TEST_DATABASE_NAME = "/home/almad/tmp/test_keykeeper.db"
-DATABASE_USER = ""
-DATABASE_PASSWORD = ""
-DATABASE_HOST = "localhost"
-DATABASE_PORT = ''
-
-#DATABASE_OPTIONS = {"init_command": "SET storage_engine=INNODB" } 
-
+DATABASES = {
+    'default' : {
+        'ENGINE' : 'django.db.backends.sqlite3',
+        'NAME' : "/tmp/dst.db",
+        'TEST_NAME' : "/tmp/test_dst.db",
+    },
+    'users' : {
+        'ENGINE' : 'django.db.backends.sqlite3',
+        'NAME' : "/tmp/udst.db",
+        'TEST_NAME' : "/tmp/test_udst.db",
+    },
+}
 
 TIME_ZONE = 'Europe/Prague'
 
