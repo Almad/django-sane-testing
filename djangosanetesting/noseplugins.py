@@ -249,7 +249,6 @@ class CherryPyLiveServerPlugin(AbstractLiveServerPlugin):
          _application = AdminMediaHandler(WSGIHandler())
     
          def application(environ, start_response):
-             print 'app'
              environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']
              return _application(environ, start_response)
     

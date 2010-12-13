@@ -6,18 +6,9 @@ from djangosanetesting.utils import get_live_server_path
 from testapp.models import ExampleModel
 
 class TestLiveServerRunning(HttpTestCase):
-    def __init__(self, *args, **kwargs):
-        super(TestLiveServerRunning, self).__init__(*args, **kwargs)
-        # I did not found how to load those variables from django.conf.settings,
-        # so I must just hardcode them. Advices welcomed.
-        self.host = 'localhost'
-        self.port = 8000
     
     def get_ok(self):
-        self.assertEquals(u'200 OK', self.urlopen('http://%(host)s:%(port)s/testtwohundred/' % {
-            'host' : self.host,
-            'port' : self.port
-        }).read())
+        self.assertEquals(u'200 OK', self.urlopen('%stesttwohundred/' % get_live_server_path()).read())
 
     def test_http_retrievable(self):
         return self.get_ok()
@@ -34,11 +25,7 @@ class TestLiveServerRunning(HttpTestCase):
         # when repeating request often...
         for i in xrange(1, 10):
             try:
-                response = self.urlopen(url='http://%(host)s:%(port)s/return_not_authorized/' % {
-                    'host' : self.host,
-                    'port' : self.port
-                },
-                data='data')
+                response = self.urlopen(url='%sreturn_not_authorized/' % get_live_server_path(), data='data')
                 #response = opener.open(request)
             except urllib2.HTTPError, err:
                 self.assert_equals(401, err.code)
@@ -47,27 +34,21 @@ class TestLiveServerRunning(HttpTestCase):
 
     def test_server_error(self):
         try:
-            self.urlopen(url='http://%(host)s:%(port)s/return_server_error/' % {
-                    'host' : self.host,
-                    'port' : self.port
-                })
+            self.urlopen(url='%sreturn_server_error/' % get_live_server_path())
         except urllib2.HTTPError, err:
             self.assert_equals(500, err.code)
             self.assert_equals("500 Server error, traceback not found", err.msg)
-            return True
-        assert False, "500 expected"
+        else:
+            assert False, "500 expected"
 
     def test_django_error_traceback(self):
         try:
-            self.urlopen(url='http://%(host)s:%(port)s/return_django_error/' % {
-                    'host' : self.host,
-                    'port' : self.port
-                })
+            self.urlopen(url='%sreturn_django_error/' % get_live_server_path())
         except urllib2.HTTPError, err:
             self.assert_equals(500, err.code)
             self.assert_not_equals("500 Server error, traceback not found", err.msg)
-            return True
-        assert False, "500 expected"
+        else:
+            assert False, "500 expected"
 
 class TestSeleniumWorks(SeleniumTestCase):
     def setUp(self):
@@ -97,8 +78,8 @@ class TestSeleniumWorks(SeleniumTestCase):
         except urllib2.HTTPError, err:
             self.assert_equals(500, err.code)
             self.assert_equals("500 Server error, traceback not found", err.msg)
-            return True
-        assert False, "500 expected"
+        else:
+            assert False, "500 expected"
 
 
 class TestTwill(HttpTestCase):
@@ -121,8 +102,8 @@ class TestTwill(HttpTestCase):
         except urllib2.HTTPError, err:
             self.assert_equals(500, err.code)
             self.assert_not_equals("500 Server error, traceback not found", err.msg)
-            return True
-        assert False, "500 expected"
+        else:
+            assert False, "500 expected"
 
     def test_twill_django_error_traceback(self):
         try:
@@ -130,5 +111,5 @@ class TestTwill(HttpTestCase):
         except urllib2.HTTPError, err:
             self.assert_equals(500, err.code)
             self.assert_equals("500 Server error, traceback not found", err.msg)
-            return True
-        assert False, "500 expected"
+        else:
+            assert False, "500 expected"
