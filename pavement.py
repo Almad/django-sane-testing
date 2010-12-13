@@ -3,7 +3,7 @@
 from paver.easy import *
 from paver.setuputils import setup
 
-VERSION = '0.5.9'
+VERSION = '0.5.10'
 name = 'djangosanetesting'
 
 setup(
@@ -27,8 +27,6 @@ Selenium has also been made super easy - just start --with-selenium, inherit fro
 Package is documented - see docs/ or http://getthedocs.org/Almad/djangosanetesting.
 ''',
     packages = ['djangosanetesting', 'djangosanetesting.selenium'],
-    scripts = [],
-    data_files = [('.', './paver-minilib.zip'),],
     requires = ['Django (>=1.1)', 'nose (>=0.10)'],
     classifiers=[
         "Development Status :: 4 - Beta",
