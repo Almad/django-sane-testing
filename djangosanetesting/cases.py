@@ -1,3 +1,7 @@
+import re
+import sys
+import urllib2
+
 from nose.tools import (
                 assert_equals,
                 assert_almost_equals,
@@ -9,8 +13,6 @@ from nose.tools import (
 from nose import SkipTest
 
 from djangosanetesting.utils import twill_patched_go, twill_xpath_go, extract_django_traceback
-import urllib2
-import sys
 
 __all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase", "HttpTestCase", "SeleniumTestCase")
 
@@ -26,6 +28,53 @@ class SaneTestCase(object):
     SkipTest = SkipTest
 
     failureException = AssertionError
+
+    def __new__(type, *args, **kwargs):
+        """
+        When constructing class, add assert* methods from unittest(2),
+        both camelCase and pep8-ify style.
+        
+        """
+        obj = super(SaneTestCase, type).__new__(type, *args, **kwargs)
+
+        caps = re.compile('([A-Z])')
+        
+        from unittest import TestCase
+        
+        ##########
+        ### Scraping heavily inspired by nose testing framework, (C) by Jason Pellerin
+        ### and respective authors.
+        ##########
+        
+        class Dummy(TestCase):
+            def att():
+                pass
+        t = Dummy('att')
+        
+        def pepify(name):
+            return caps.sub(lambda m: '_' + m.groups()[0].lower(), name)
+        
+        def scrape(t):
+            for a in [at for at in dir(t) if at.startswith('assert') and not '_' in at]:
+                v = getattr(t, a)
+                setattr(obj, a, v)
+                setattr(obj, pepify(a), v)
+        
+        scrape(t)
+        
+        try:
+            from unittest2 import TestCase
+        except ImportError:
+            pass
+        else:
+            class Dummy(TestCase):
+                def att():
+                    pass
+            t = Dummy('att')
+            scrape(t)
+                
+        return obj
+
     
     def _check_plugins(self):
         if getattr(self, 'required_sane_plugins', False):
@@ -41,36 +90,6 @@ class SaneTestCase(object):
         self._check_skipped()
         self._check_plugins()
     
-    def assert_equals(self, *args, **kwargs):
-        assert_equals(*args, **kwargs)
-    
-    assertEquals = assert_equals
-    
-    def assert_not_equals(self, *args, **kwargs):
-        assert_not_equals(*args, **kwargs)
-    
-    assertNotEquals = assert_not_equals
-    
-
-    def assert_almost_equals(self, *args, **kwargs):
-        assert_almost_equals(*args, **kwargs)
-    
-    assertAlmostEquals = assert_almost_equals
-    
-    def assert_raises(self, *args, **kwargs):
-        assert_raises(*args, **kwargs)
-    
-    assertRaises = assert_raises
-
-    def assert_true(self, *args, **kwargs):
-        assert_true(*args, **kwargs)
-    
-    assertTrue = assert_true
-    
-    def assert_false(self, *args, **kwargs):
-        assert_false(*args, **kwargs)
-    
-    assertFalse = assert_false
 
     def fail(self, *args, **kwargs):
         self.failureException(*args, **kwargs)

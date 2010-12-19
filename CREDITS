@@ -11,4 +11,6 @@ Jeff Balogh wrote a patch for Django's #12671. Snippets from this patch
 (commited in http://code.djangoproject.com/changeset/12306) were used for
 flushing cache part.
 
-
+Jason Pellerin wrote the nose testing framework that made this library
+possible. Also, he wrote propagation methods for making unittest assert
+methods available.

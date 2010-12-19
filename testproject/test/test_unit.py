@@ -35,7 +35,18 @@ class TestUnitSimpleMetods(UnitTestCase):
             self.fail()
         except AssertionError:
             pass
+    
+    def test_new_unittest_methods_imported(self):
+        try:
+            import unittest2
+        except ImportError:
+            import sys
+            if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+                raise self.SkipTest("Special assert functions not available")
 
+        self.assert_in(1, [1])
+
+    
 class TestUnitAliases(UnitTestCase):
     
     def get_camel(self, name):
