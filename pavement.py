@@ -64,3 +64,30 @@ options(
     ),
 )
 
+@task
+@consume_args
+def unit(args, nose_run_kwargs=None):
+    """ Run unittests """
+    import os, sys
+    from os.path import join, dirname, abspath
+    
+    test_project_module = "testproject"
+    
+    sys.path.insert(0, abspath(join(dirname(__file__), test_project_module)))
+    sys.path.insert(0, abspath(dirname(__file__)))
+    
+    os.environ['DJANGO_SETTINGS_MODULE'] = "%s.settings" % test_project_module
+    
+    import nose
+
+    os.chdir(test_project_module)
+
+    argv = ["--with-django", "--with-cherrypyliveserver"] + args
+
+    nose_run_kwargs = nose_run_kwargs or {}
+
+    nose.run_exit(
+        argv = ["nosetests"] + argv,
+        defaultTest = test_project_module,
+        **nose_run_kwargs
+    )
