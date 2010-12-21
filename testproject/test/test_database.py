@@ -1,7 +1,7 @@
 import urllib2
 
 from djangosanetesting.cases import DatabaseTestCase, DestructiveDatabaseTestCase, HttpTestCase
-from djangosanetesting.utils import mock_settings
+from djangosanetesting.utils import mock_settings, get_live_server_path
 
 from testapp.models import ExampleModel
 
@@ -63,21 +63,11 @@ class TestProperClashing(DatabaseTestCase):
 class TestFixturesLoadedProperly(HttpTestCase):
     fixtures = ["random_model_for_testing"]
 
-    def __init__(self, *args, **kwargs):
-        super(TestFixturesLoadedProperly, self).__init__(*args, **kwargs)
-        # I did not found how to load those variables from django.conf.settings,
-        # so I must just hardcode them. Advices welcomed.
-        self.host = 'localhost'
-        self.port = 8000
-    
     def test_model_loaded(self):
         self.assert_equals(2, len(ExampleModel.objects.all()))
 
     def test_available_in_another_thread(self):
-        self.assertEquals(u'200 OK', self.urlopen('http://%(host)s:%(port)s/assert_two_example_models/' % {
-            'host' : self.host,
-            'port' : self.port
-        }).read())
+        self.assertEquals(u'OKidoki', self.urlopen('%sassert_two_example_models/' % get_live_server_path()).read())
 
 class TestDjangoOneTwoMultipleDatabases(DestructiveDatabaseTestCase):
     """

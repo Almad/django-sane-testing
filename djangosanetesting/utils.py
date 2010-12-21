@@ -8,15 +8,18 @@ DEFAULT_LIVE_SERVER_ADDRESS = '0.0.0.0'
 DEFAULT_URL_ROOT_SERVER_ADDRESS = 'localhost'
 
 
-def extract_django_traceback(twill=None, http_error=None):
+def extract_django_traceback(twill=None, http_error=None, lines=None):
     record = False
     traceback = ''
 
-    if http_error:
+    if not lines and http_error:
         lines = http_error.readlines()
     elif twill:
         http_error = urllib2.HTTPError(url=twill.get_url(), code=500, msg=None, hdrs=None, fp=None)
-        lines = twill.result.get_page().split("\n")
+        if not lines:
+            lines = twill.result.get_page().split("\n")
+    
+    lines = lines or []
 
     for one in lines:
         if one.strip().startswith('<textarea ') and one.find('id="traceback_area"'):
@@ -164,15 +167,14 @@ def selenium_patched_open(selenium, original_open):
                 if uri.startswith("/"):
                     base = base.rstrip("/")
                 uri = "%s%s" % (base, uri)
+            
+            return original_open(uri)
 
-            return urllib2.urlopen(uri)
-        except urllib2.HTTPError, err:
-            if err.code == 500:
-                raise extract_django_traceback(http_error=err)
+        except Exception, err:
+            if len(err.args) > 0 and err.args[0].endswith('Response_Code = 500 Error_Message = INTERNAL SERVER ERROR'):
+                raise extract_django_traceback(http_error=err, lines=selenium.get_html_source().split('\n'))
             else:
-                raise err
-
-        return original_open(uri)
+                raise
 
     return open_handle_server_error
 
