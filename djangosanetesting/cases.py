@@ -2,6 +2,7 @@ import re
 import sys
 import urllib2
 
+from django import template
 from nose.tools import (
                 assert_equals,
                 assert_almost_equals,
@@ -14,7 +15,8 @@ from nose import SkipTest
 
 from djangosanetesting.utils import twill_patched_go, twill_xpath_go, extract_django_traceback
 
-__all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase", "HttpTestCase", "SeleniumTestCase")
+__all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase",
+           "HttpTestCase", "SeleniumTestCase", "TemplateTagTestCase")
 
 class SaneTestCase(object):
     """ Common ancestor we're using our own hierarchy """
@@ -220,3 +222,20 @@ class SeleniumTestCase(HttpTestCase):
     selenium_plugin_started = False
     test_type = "selenium"
 
+
+class TemplateTagTestCase(SaneTestCase):
+    TemplateSyntaxError = template.TemplateSyntaxError
+    preload = ()
+
+    def _render_template(self, tmpl, **kwargs):
+        """
+        Render the given template string with user-defined tag modules
+        pre-loaded.
+        """
+
+        loads = u''
+        for load in self.preload:
+            loads = u''.join([loads, '{% load ', load, ' %}'])
+
+        tmpl = u''.join([loads, tmpl])
+        return template.Template(tmpl).render(template.Context(kwargs))
