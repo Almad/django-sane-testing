@@ -41,7 +41,7 @@ class SaneTestCase(object):
 
         caps = re.compile('([A-Z])')
         
-        from unittest import TestCase
+        from django.test import TestCase
         
         ##########
         ### Scraping heavily inspired by nose testing framework, (C) by Jason Pellerin
