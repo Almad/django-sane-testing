@@ -21,6 +21,7 @@ Various test types were identified when taking look at :ref:`developer tests <de
 * :class:`DestructiveDatabaseTestCase`
 * :class:`HttpTestCase`
 * :class:`SeleniumTestCase`
+* :class:`TemplateTagTestCase`
 
 However, you are not *required* to inherit from those (except for :ref:`twill <twill-integration>`), althrough it's much advised to keep test cases intent-revealing. Job of the library is to:
 
@@ -44,11 +45,12 @@ Proper defaults are selected when using :ref:`library test cases <list-of-test-c
 
 When writing tests, keep in mind limitations of the individual test cases to prevent interacting tests:
 
-* :class:`UnitTestCase` should not interact with database or server frontend
-* :class:`DatabaseTestCase` must run in one transaction and thus cannot be multithreaded and must not call commit
-* :class:`DestructiveDatabaseTestCase` is slow and do not have live server available (cannot test using urllib2 and friends)
+* :class:`UnitTestCase` should not interact with database or server frontend.
+* :class:`DatabaseTestCase` must run in one transaction and thus cannot be multithreaded and must not call commit.
+* :class:`DestructiveDatabaseTestCase` is slow and do not have live server available (cannot test using urllib2 and friends).
 * :class:`HttpTestCase` provides all goodies except Selenium. When first encountered, live server is spawned; after that, it's as fast as :class:`DestructiveDatabaseTestCase`.
 * :class:`SeleniumTestCase` has it all (except speed).
+* :class:`TemplateTagTestCase` provides helper methods for testing custom template tags and filters.
 
 
 .. _running-tests:

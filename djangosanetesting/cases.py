@@ -231,6 +231,12 @@ class TemplateTagTestCase(SaneTestCase):
         """
         Render the given template string with user-defined tag modules
         pre-loaded.
+
+        Attributes
+        * `preload' defines which template tag libraries are to be loaded
+          before rendering the actual template string
+        * `TemplateSyntaxError' is bundled within this class, so that nothing
+          from django.template must be imported in most cases
         """
 
         loads = u''
