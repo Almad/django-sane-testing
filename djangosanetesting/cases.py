@@ -2,7 +2,7 @@ import re
 import sys
 import urllib2
 
-from django import template
+from django.template import Context, Template, TemplateSyntaxError
 from nose.tools import (
                 assert_equals,
                 assert_almost_equals,
@@ -224,10 +224,10 @@ class SeleniumTestCase(HttpTestCase):
 
 
 class TemplateTagTestCase(SaneTestCase):
-    TemplateSyntaxError = template.TemplateSyntaxError
+    TemplateSyntaxError = TemplateSyntaxError
     preload = ()
 
-    def _render_template(self, tmpl, **kwargs):
+    def _render_template(self, template, **kwargs):
         """
         Render the given template string with user-defined tag modules
         pre-loaded.
@@ -237,5 +237,5 @@ class TemplateTagTestCase(SaneTestCase):
         for load in self.preload:
             loads = u''.join([loads, '{% load ', load, ' %}'])
 
-        tmpl = u''.join([loads, tmpl])
-        return template.Template(tmpl).render(template.Context(kwargs))
+        template = u''.join([loads, template])
+        return Template(template).render(Context(kwargs))
