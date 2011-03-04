@@ -328,14 +328,15 @@ class DjangoPlugin(Plugin):
 
 
     def begin(self):
-        """
-        Before running database, initialize database et al, so noone will complain
-        """
         from django.test.utils import setup_test_environment
         setup_test_environment()
 
-        #FIXME: This should be perhaps moved to startTest and be lazy
-        # for tests that do not need test database at all
+    def prepareTestRunner(self, runner):
+        """
+        Before running tests, initialize database et al, so noone will complain
+        """
+        # FIXME: this should be lazy for tests that do not need test
+        # database at all
         from django.db import connection
         from django.conf import settings
         self.old_name = settings.DATABASE_NAME
@@ -360,7 +361,7 @@ class DjangoPlugin(Plugin):
 
         self.need_flush = False
     
-    def finalize(self, *args, **kwargs):
+    def finalize(self, result):
         """
         At the end, tear down our testbed
         """
@@ -463,16 +464,16 @@ class DjangoPlugin(Plugin):
             for db in databases:
                 call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : commit, 'database' : db})
 
- 
+
     def stopTest(self, test):
         """
         After test is run, clear urlconf and caches
         """
         from django.db import transaction
         from django.conf import settings
-        
+
         test_case = get_test_case_class(test)
-        
+
         if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
             transaction.rollback()
             transaction.leave_transaction_management()
@@ -481,7 +482,7 @@ class DjangoPlugin(Plugin):
             settings.ROOT_URLCONF = test_case._old_root_urlconf
             clear_url_caches()
         flush_cache(test_case)
-        
+
 class DjangoTranslationPlugin(Plugin):
     """
     For testcases with selenium_start set to True, connect to Selenium RC.
