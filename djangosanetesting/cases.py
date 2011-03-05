@@ -224,19 +224,24 @@ class SeleniumTestCase(HttpTestCase):
 
 
 class TemplateTagTestCase(SaneTestCase):
+    """
+    Allow for sane and comfortable template tag unit-testing.
+
+    Attributes:
+    * `preload' defines which template tag libraries are to be loaded
+      before rendering the actual template string
+    * `TemplateSyntaxError' is bundled within this class, so that nothing
+      from django.template must be imported in most cases of template
+      tag testing
+    """
+
     TemplateSyntaxError = TemplateSyntaxError
     preload = ()
 
-    def _render_template(self, template, **kwargs):
+    def render_template(self, template, **kwargs):
         """
         Render the given template string with user-defined tag modules
-        pre-loaded.
-
-        Attributes
-        * `preload' defines which template tag libraries are to be loaded
-          before rendering the actual template string
-        * `TemplateSyntaxError' is bundled within this class, so that nothing
-          from django.template must be imported in most cases
+        pre-loaded (according to the class attribute `preload').
         """
 
         loads = u''
