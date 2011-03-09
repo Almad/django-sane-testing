@@ -223,7 +223,7 @@ class SeleniumTestCase(HttpTestCase):
     test_type = "selenium"
 
 
-class TemplateTagTestCase(SaneTestCase):
+class TemplateTagTestCase(UnitTestCase):
     """
     Allow for sane and comfortable template tag unit-testing.
 
