@@ -18,3 +18,6 @@ methods available.
 Rob Hudson wrote a patch for multithreaded Django dev server, available at
 http://code.djangoproject.com/ticket/3357 . It served as a base for Django live
 server embedded in code.
+
+Andrej Tokarcik contributed TemplateTagTestCase and variety of improvements.
+
