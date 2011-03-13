@@ -1,4 +1,4 @@
-Lukas Linhart <bugs@almad.net> is primary author of this library.
+Lukas "Almad" Linhart <bugs@almad.net> is the primary author of this library.
 
 However, code and/or inspiration has been taken from other generous
 open-source authors, listed in arbitrary order:
@@ -11,13 +11,14 @@ Jeff Balogh wrote a patch for Django's #12671. Snippets from this patch
 (commited in http://code.djangoproject.com/changeset/12306) were used for
 flushing cache part.
 
+Jeff also started django-nose project. Its test runners are used in DST.
+
 Jason Pellerin wrote the nose testing framework that made this library
 possible. Also, he wrote propagation methods for making unittest assert
-methods available.
+methods available that were adopted in DST.
 
 Rob Hudson wrote a patch for multithreaded Django dev server, available at
 http://code.djangoproject.com/ticket/3357 . It served as a base for Django live
 server embedded in code.
 
 Andrej Tokarcik contributed TemplateTagTestCase and variety of improvements.
-

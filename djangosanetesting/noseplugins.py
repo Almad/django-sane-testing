@@ -32,7 +32,7 @@ from djangosanetesting.utils import (
     selenium_patched_open
 )
 
-__all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin")
+__all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin", "ResultPlugin")
 
 def flush_cache(test_case=None):
     from django.contrib.contenttypes.models import ContentType
@@ -612,4 +612,29 @@ class SaneTestSelectionPlugin(Plugin):
         if getattr(test_case, "test_type", "unit") not in self.enabled_tests:
             self.skipped = True
             #raise SkipTest(u"Test type %s not enabled" % getattr(test_case, "test_type", "unit"))
+
+##########
+### Result plugin is used when using Django test runner
+### Taken from django-nose project.
+### (C) Jeff Balogh and contributors, released under BSD license.
+##########
+
+class ResultPlugin(Plugin):
+    """
+    Captures the TestResult object for later inspection.
+
+    nose doesn't return the full test result object from any of its runner
+    methods.  Pass an instance of this plugin to the TestProgram and use
+    ``result`` after running the tests to get the TestResult object.
+    """
+
+    name = "djangoresult"
+    activation_parameter = '--with-djangoresult'
+    enabled = True
+
+    def configure(self, options, config):
+        Plugin.configure(self, options, config)
+
+    def finalize(self, result):
+        self.result = result
 
