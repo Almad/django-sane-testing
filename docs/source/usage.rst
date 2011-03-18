@@ -59,9 +59,9 @@ When writing tests, keep in mind limitations of the individual test cases to pre
 Running tests
 ---------------------------
 
-Easiest way to run tests is to put ``TEST_RUNNER="djangosanetesting.testrunner.run_tests"`` into your :file:`settings.py`. This still allows you to select individual tests by running ``./manage.py test testpackage.module.module:Class.method``, however there is no way to disable some tests (by not using some plugin) or to use additional nose plugins.
+Easiest way to run tests is to put ``TEST_RUNNER="djangosanetesting.testrunner.DstNoseTestSuiteRunner"`` into your :file:`settings.py`. This allows You to use ``manage.py test`` command (all plugins are enabled by default).
 
-More flexible and granular way is using standard ``nosetests`` command. However, keep in mind:
+You can still use standard ``nosetests`` command. However, keep in mind:
 
 * There is no path handling done for you
 * DJANGO_SETTINGS_VARIABLE is also not set by default

@@ -7,6 +7,7 @@ from nose.plugins.manager import DefaultPluginManager
 
 from django.core.management.base import BaseCommand
 from django.test import utils
+from django.test.simple import DjangoTestSuiteRunner
 
 from djangosanetesting.noseplugins import (
     DjangoPlugin,
@@ -15,7 +16,7 @@ from djangosanetesting.noseplugins import (
     ResultPlugin,
 )
 
-__all__ = ("run_tests",)
+__all__ = ("DstNoseTestSuiteRunner",)
 
 """
 Act as Django test runner, but use nose. Enable common django-sane-testing
@@ -49,62 +50,112 @@ except NameError:
                 return True
         return False
 
-def run_tests(test_labels, verbosity=1, interactive=True, spatial_db=False):
-    """Test runner that invokes nose."""
-    # Prepare django for testing.
-    from django.conf import settings
+OPTION_TRANSLATION = {'--failfast': '-x'}
 
-    utils.setup_test_environment()
-    old_db_name = settings.DATABASE_NAME
+class DstNoseTestSuiteRunner(DjangoTestSuiteRunner):
 
-    result_plugin = ResultPlugin()
-    plugins = [DjangoPlugin(), SeleniumPlugin(), DjangoTranslationPlugin(), result_plugin]
+    def run_suite(self, nose_argv=None):
+        """Test runner that invokes nose."""
+        # Prepare django for testing.
+        from django.conf import settings
     
-    if getattr(settings, 'CHERRYPY_TEST_SERVER', False):
-        plugins.append(CherryPyLiveServerPlugin())
-    else:
-        plugins.append(DjangoLiveServerPlugin())
+        utils.setup_test_environment()
+        old_db_name = settings.DATABASE_NAME
     
-    # Do not pretend it's a production environment.
-    # settings.DEBUG = False
-
-    # We pass nose a list of arguments that looks like sys.argv, but customize
-    # to avoid unknown django arguments.
-    nose_argv = ['nosetests']
-    if hasattr(settings, 'NOSE_ARGS'):
-        nose_argv.extend(settings.NOSE_ARGS)
-
-    # activate all required plugins
-    activate_plugin(DjangoPlugin, nose_argv)
-    activate_plugin(SeleniumPlugin, nose_argv)
-    activate_plugin(DjangoTranslationPlugin, nose_argv)
-#    activate_plugin(ResultPlugin, nose_argv)
-
-    if getattr(settings, 'CHERRYPY_TEST_SERVER', False):
-        activate_plugin(CherryPyLiveServerPlugin, nose_argv)
-    else:
-        activate_plugin(DjangoLiveServerPlugin, nose_argv)
-
-    # Skip over 'manage.py test' and any arguments handled by django.
-    django_opts = ['--noinput']
-    for opt in BaseCommand.option_list:
-        django_opts.extend(opt._long_opts)
-        django_opts.extend(opt._short_opts)
-
-    nose_argv.extend(opt for opt in sys.argv[2:] if
-                     not any(opt.startswith(d) for d in django_opts))
-
-    if verbosity >= 1:
-        print ' '.join(nose_argv)
-
-    test_program = nose.core.TestProgram(argv=nose_argv, exit=False,
-                                                addplugins=plugins)
+        result_plugin = ResultPlugin()
+        plugins = [DjangoPlugin(), SeleniumPlugin(), DjangoTranslationPlugin(), result_plugin]
+        
+        if getattr(settings, 'CHERRYPY_TEST_SERVER', False):
+            plugins.append(CherryPyLiveServerPlugin())
+        else:
+            plugins.append(DjangoLiveServerPlugin())
+        
+        # Do not pretend it's a production environment.
+        # settings.DEBUG = False
     
-    # FIXME: ResultPlugin is working not exactly as advertised in django-nose
-    # multiple instance problem, find workaround
-#    result = result_plugin.result
-#    return len(result.failures) + len(result.errors)
-    return not test_program.success
+        # We pass nose a list of arguments that looks like sys.argv, but customize
+        # to avoid unknown django arguments.
+
+        for plugin in _get_plugins_from_settings():
+            plugins_to_add.append(plugin)
+        # activate all required plugins
+        activate_plugin(DjangoPlugin, nose_argv)
+        activate_plugin(SeleniumPlugin, nose_argv)
+        activate_plugin(DjangoTranslationPlugin, nose_argv)
+    #    activate_plugin(ResultPlugin, nose_argv)
+    
+        if getattr(settings, 'CHERRYPY_TEST_SERVER', False):
+            activate_plugin(CherryPyLiveServerPlugin, nose_argv)
+        else:
+            activate_plugin(DjangoLiveServerPlugin, nose_argv)
+    
+        # Skip over 'manage.py test' and any arguments handled by django.
+        django_opts = ['--noinput']
+        for opt in BaseCommand.option_list:
+            django_opts.extend(opt._long_opts)
+            django_opts.extend(opt._short_opts)
+    
+        nose_argv.extend(OPTION_TRANSLATION.get(opt, opt)
+                         for opt in sys.argv[1:]
+                         if opt.startswith('-') and not any(opt.startswith(d) for d in django_opts))
+    
+        if self.verbosity >= 2:
+            print ' '.join(nose_argv)
+    
+        test_program = nose.core.TestProgram(argv=nose_argv, exit=False,
+                                                    addplugins=plugins)
+        
+        # FIXME: ResultPlugin is working not exactly as advertised in django-nose
+        # multiple instance problem, find workaround
+    #    result = result_plugin.result
+    #    return len(result.failures) + len(result.errors)
+        return not test_program.success
+
+    def run_tests(self, test_labels, extra_tests=None):
+        """
+        Run the unit tests for all the test names in the provided list.
+
+        Test names specified may be file or module names, and may optionally
+        indicate the test case to run by separating the module or file name
+        from the test case name with a colon. Filenames may be relative or
+        absolute.  Examples:
+
+        runner.run_tests('test.module')
+        runner.run_tests('another.test:TestCase.test_method')
+        runner.run_tests('a.test:TestCase')
+        runner.run_tests('/path/to/test/file.py:test_function')
+
+        Returns the number of tests that failed.
+        """
+        
+        from django.conf import settings
+        
+        nose_argv = ['nosetests', '--verbosity', str(self.verbosity)] + list(test_labels)
+        if hasattr(settings, 'NOSE_ARGS'):
+            nose_argv.extend(settings.NOSE_ARGS)
+
+        # Skip over 'manage.py test' and any arguments handled by django.
+        django_opts = ['--noinput']
+        for opt in BaseCommand.option_list:
+            django_opts.extend(opt._long_opts)
+            django_opts.extend(opt._short_opts)
+
+        nose_argv.extend(OPTION_TRANSLATION.get(opt, opt)
+                         for opt in sys.argv[1:]
+                         if opt.startswith('-') and not any(opt.startswith(d) for d in django_opts))
+
+        if self.verbosity >= 2:
+            print ' '.join(nose_argv)
+
+        result = self.run_suite(nose_argv)
+        ### FIXME
+        class SimpleResult(object): pass
+        res = SimpleResult()
+        res.failures = ['1'] if result else []
+        res.errors = []
+        # suite_result expects the suite as the first argument.  Fake it.
+        return self.suite_result({}, res)
+
 
 def _get_options():
     """Return all nose options that don't conflict with django options."""
@@ -116,9 +167,29 @@ def _get_options():
     return tuple(o for o in options if o.dest not in django_opts and
                                        o.action != 'help')
 
+def _get_plugins_from_settings():
+    from django.conf import settings
+    if hasattr(settings, 'NOSE_PLUGINS'):
+        for plg_path in settings.NOSE_PLUGINS:
+            try:
+                dot = plg_path.rindex('.')
+            except ValueError:
+                raise exceptions.ImproperlyConfigured(
+                                    '%s isn\'t a Nose plugin module' % plg_path)
+            p_mod, p_classname = plg_path[:dot], plg_path[dot+1:]
+            try:
+                mod = import_module(p_mod)
+            except ImportError, e:
+                raise exceptions.ImproperlyConfigured(
+                        'Error importing Nose plugin module %s: "%s"' % (p_mod, e))
+            try:
+                p_class = getattr(mod, p_classname)
+            except AttributeError:
+                raise exceptions.ImproperlyConfigured(
+                        'Nose plugin module "%s" does not define a "%s" class' % (
+                                                                p_mod, p_classname))
+            yield p_class()
 
 # Replace the builtin command options with the merged django/nose options.
-run_tests.options = _get_options()
-
-run_tests.__test__ = False
-
+DstNoseTestSuiteRunner.options = _get_options()
+DstNoseTestSuiteRunner.__test__ = False
