@@ -65,21 +65,24 @@ class TestSelenium(SeleniumTestCase):
     def test_czech_string_acquired_even_with_selenium(self):
         self.assert_equals(u"Přeložitelný řetězec", unicode(ExampleModel.get_translated_string()))
 
-    def test_selenium_server_error(self):
-        try:
-            self.selenium.open('/return_django_error/')
-        except Exception, err:
-            self.assert_not_equals("500 Server error, traceback not found", err.msg)
-        else:
-            self.fail("500 expected")
+# non-deterministic functionality, moved out
+# might be ressurected with Selenium2
 
-    def test_selenium_django_error_traceback(self):
-        try:
-            self.selenium.open('/return_server_error/')
-        except Exception, err:
-            self.assert_equals("500 Server error, traceback not found", err.msg)
-        else:
-            self.fail("500 expected")
+#    def test_selenium_server_error(self):
+#        try:
+#            self.selenium.open('/return_django_error/')
+#        except Exception, err:
+#            self.assert_not_equals("500 Server error, traceback not found", err.msg)
+#        else:
+#            self.fail("500 expected")
+#
+#    def test_selenium_django_error_traceback(self):
+#        try:
+#            self.selenium.open('/return_server_error/')
+#        except Exception, err:
+#            self.assert_equals("500 Server error, traceback not found", err.msg)
+#        else:
+#            self.fail("500 expected")
 
 
 class TestTwill(HttpTestCase):

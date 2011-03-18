@@ -158,23 +158,3 @@ def mock_settings(settings_attribute, value):
         return wrapped
     return wrapper
 
-def selenium_patched_open(selenium, original_open):
-    def open_handle_server_error(uri):
-        #almost copy-paste of do_command from selenium
-        try:
-            if not uri.startswith("http"):
-                base = get_live_server_path()
-                if uri.startswith("/"):
-                    base = base.rstrip("/")
-                uri = "%s%s" % (base, uri)
-            
-            return original_open(uri)
-
-        except Exception, err:
-            if len(err.args) > 0 and err.args[0].endswith('Response_Code = 500 Error_Message = INTERNAL SERVER ERROR'):
-                raise extract_django_traceback(http_error=err, lines=selenium.get_html_source().split('\n'))
-            else:
-                raise
-
-    return open_handle_server_error
-

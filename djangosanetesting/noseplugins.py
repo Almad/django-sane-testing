@@ -29,7 +29,6 @@ from djangosanetesting.selenium.driver import selenium
 from djangosanetesting.utils import (
     get_live_server_path, test_database_exists,
     DEFAULT_LIVE_SERVER_ADDRESS, DEFAULT_LIVE_SERVER_PORT,
-    selenium_patched_open
 )
 
 __all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin", "ResultPlugin")
@@ -548,7 +547,6 @@ class SeleniumPlugin(Plugin):
                   )
             try:
                 sel.start()
-                sel.open = selenium_patched_open(sel, sel.open)
                 test_case.selenium_started = True
             except Exception, err:
                 # we must catch it all as there is untyped socket exception on Windows :-]]]
