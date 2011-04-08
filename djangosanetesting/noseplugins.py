@@ -59,11 +59,7 @@ def enable_test(test_case, plugin_attribute):
     if not getattr(test_case, plugin_attribute, False):
         setattr(test_case, plugin_attribute, True)
 
-def flush_database(test_case, database=None):
-    if database is None:
-        from django.db import DEFAULT_DB_ALIAS
-        database = DEFAULT_DB_ALIAS
-
+def flush_database(test_case, database=DEFAULT_DB_ALIAS):
     call_command('flush', verbosity=0, interactive=False, database=database)
 
 #####
