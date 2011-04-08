@@ -4,8 +4,6 @@ Used to somehow partially backport http://code.djangoproject.com/ticket/12671
 to Django < 1.2
 """
 
-import shutil
-
 ###### clear functions
 
 def clear_db(cache):
@@ -14,10 +12,10 @@ def clear_db(cache):
     cursor.execute('DELETE FROM %s' % cache._table)
 
 def clear_filebased(cache):
-    try:
-        shutil.rmtree(cache._dir)
-    except (IOError, OSError):
-        pass
+    tmp_freq, tmp_max = cache._cull_frequency, cache._max_entries
+    cache._cull_frequency, cache._max_entries = 1, 0
+    cache._cull()
+    cache._cull_frequency, cache._max_entries = tmp_freq, tmp_max
 
 def clear_memcached(cache):
     cache._cache.flush_all()
