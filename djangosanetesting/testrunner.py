@@ -7,7 +7,10 @@ from nose.plugins.manager import DefaultPluginManager
 
 from django.core.management.base import BaseCommand
 from django.test import utils
-from django.test.simple import DjangoTestSuiteRunner
+try:
+    from django.test.simple import DjangoTestSuiteRunner
+except ImportError:
+    from djangosanetesting.runnercompat import DjangoTestSuiteRunner
 
 from djangosanetesting.noseplugins import (
     DjangoPlugin,
@@ -193,3 +196,7 @@ def _get_plugins_from_settings():
 # Replace the builtin command options with the merged django/nose options.
 DstNoseTestSuiteRunner.options = _get_options()
 DstNoseTestSuiteRunner.__test__ = False
+
+def run_tests(test_labels, verbosity=1, interactive=True, failfast=False, extra_tests=None):
+    test_runner = DstNoseTestSuiteRunner(verbosity=verbosity, interactive=interactive, failfast=failfast)
+    return test_runner.run_tests(test_labels, extra_tests=extra_tests)
