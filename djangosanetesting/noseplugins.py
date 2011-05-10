@@ -604,7 +604,7 @@ class SaneTestSelectionPlugin(Plugin):
     def startTest(self, test):
         test_case = get_test_case_class(test)
         if getattr(test_case, "test_type", "unit") not in self.enabled_tests:
-            self.skipped = True
+            test_case.skipped = True
             #raise SkipTest(u"Test type %s not enabled" % getattr(test_case, "test_type", "unit"))
 
 ##########
