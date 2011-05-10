@@ -261,9 +261,23 @@ Also, use can use :attr:`go_xpath()` to use lxml-based XPath to specify hyperlin
 
   Twill is using standard HTTP instead of WSGI intercept. This might be available in the future as an option, if there is a demand or patch written.
 
+
+.. _settings:
+
+---------------------------
+Settings & configuration
+---------------------------
+
+Behavior of django-sane-testing can be configured to match your needs.
+
+
+TODO: List of whatever settings you can play with. 
+
+
 .. _django-sane-testing: http://devel.almad.net/trac/django-sane-testing/
 .. _Selenium: http://seleniumhq.org/
 .. _Selenium RC: http://seleniumhq.org/projects/remote-control/
 .. _CherryPy: http://www.cherrypy.org/
 .. _Twill: http://twill.idyll.org/
+
 

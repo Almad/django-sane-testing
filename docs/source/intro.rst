@@ -28,6 +28,15 @@ Library supports following:
 * `Selenium`_ RC integration (our pages needs to be tested with browser)
 * `CherryPy`_ can be used instead of `Django`_ 's WSGI (when you need usable server	)
 
+
+---------------------------------------------
+Differences from standard Django test runner
+---------------------------------------------
+
+If You are using older version than Django 1.3, you will be able to use unittest2 goodies.
+
+Unlike Django's test runner, django-sane-testing do not modify your `DEBUG` behavior. You are free to run with `DEBUG = True`, which might be handy under some circumstances. 
+
 .. _Python: http://www.python.org/
 .. _Django: http://www.djangoproject.com/
 .. _Nose: http://somethingaboutorange.com/mrl/projects/nose/
