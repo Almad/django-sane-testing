@@ -206,6 +206,11 @@ Only selected test types will be run. Test type is determined from class attribu
 .. Note::
   You're still responsible for loading required plugins for respective test cases. Unlike test selection with usual plugins, selection plugin enables you to run slower tests without faster (i.e. HTTP tests without unittests), and also skipping is faster (Selection plugin is run before others, thus skip is done without any unneccessary database handling, which may not be true for usual skips).
 
+.. Warning::
+  This plugin relies on setUp from ``SaneTestCase``. Thus, it will work only with
+  tests inheriting from it. Also, if You are overwriting setUp, You have to
+  behave nicely and call ``super(YourTestClass, self).setUp()``.
+
 .. _django-translation-plugin:
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
