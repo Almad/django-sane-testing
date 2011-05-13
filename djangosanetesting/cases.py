@@ -94,7 +94,7 @@ class SaneTestCase(object):
     
 
     def fail(self, *args, **kwargs):
-        self.failureException(*args, **kwargs)
+        raise self.failureException(*args, **kwargs)
 
     def tearDown(self):
         pass

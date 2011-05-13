@@ -35,6 +35,8 @@ class TestUnitSimpleMetods(UnitTestCase):
             self.fail()
         except AssertionError:
             pass
+        else:
+            raise AssertionError("self.fail should raise AssertionError")
     
     def test_new_unittest_methods_imported(self):
         try:
