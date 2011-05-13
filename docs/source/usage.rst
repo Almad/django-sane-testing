@@ -212,13 +212,17 @@ Only selected test types will be run. Test type is determined from class attribu
 :class:`DjangoTranslationPlugin`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If :attr:`make_translation` is True (default for every test), django.utils.translation.activate() is called before every test. If :attr:`translation_language_code` is set, it's passed to activate(); otherwise settings.LANGUAGE_CODE or 'en-us' is used.
+If :attr:`make_translation` is True (default for every test),
+django.utils.translation.activate() is called before every test.
+If :attr:`translation_language_code` is set, it's passed to activate(); otherwise
+settings.LANGUAGE_CODE or 'en-us' is used.
 
 This allows you to use translatable string taking usage of ugettest_lazy in tests.
 
 .. Warning::
 
-    It looks like Django is not switching back to "null" translations once any translation has been selected. make_translations=False will thus return lastly-activated translation.
+    It looks like Django is not switching back to "null" translations once any
+    translation has been selected. make_translations=False will thus return lastly-activated translation.
 
 .. _syncdb-messing:
 
@@ -226,19 +230,35 @@ This allows you to use translatable string taking usage of ugettest_lazy in test
 Messing with syncdb
 ---------------------------
 
-You may be doing something irresponsible like, say, referencing :class:`ContentType` ID from fixtures, working around their dynamic creation by having own content type fixture. This, however, prevents you from specifying those in fixtures attribute, as flush emits post-sync signal causing ContentTypes to be created.
+`syncdb` alone is now rarely used, as excellent `South`_ entered mainstream.
+Thus, by default, `migrate` is called every time database is recreated.
+This behavior can be adjuted using `DST_RUN_SOUTH_MIGRATIONS`
+:ref:`settings variable<settings>`
 
-By specifying ``TEST_DATABASE_FLUSH_COMMAND``, you can reference a function for custom flushing (you can use resetdb instead).
+You may be doing something irresponsible like, say, referencing
+:class:`ContentType` ID from fixtures, working around their dynamic creation by
+having own content type fixture. This, however, prevents you from specifying
+those in fixtures attribute, as flush emits post-sync signal causing
+ContentTypes to be created.
+
+By specifying ``TEST_DATABASE_FLUSH_COMMAND``, you can reference a function for
+custom flushing (you can use resetdb instead).
 
 .. Note::
 
-    You must specify function object directly (it takes one argument, test_case object). Recognizing objects from string is not yet supported as it's not needed for me - patches and tests welcomed.
+    You must specify function object directly (it takes one argument, test_case
+    object). Recognizing objects from string is not yet supported as it's not
+    needed for me - patches and tests welcomed.
 
 .. Note::
 
-    When using django-sane-testing with south (in INSTALLED_APPS), You're now required to write You own command that will call both "syncdb" and "migrate". Sane-testing will have one for future releases.
+    When using ``TEST_DATABASE_FLUSH_COMMAND``, please note that `migrate` runs
+    before ``TEST_DATABASE_FLUSH_COMMAND``. This behavior will change in future
+    releases.
 
-Also, create_test_db (which is needed to be run at the very beginning) emits post_sync signal. Thus, you also probably want to set ``FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB`` to True.
+Also, create_test_db (which is needed to be run at the very beginning) emits
+post_sync signal. Thus, you also probably want to set
+``FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB`` to True.
 
 .. _twill-integration:
 
@@ -246,7 +266,10 @@ Also, create_test_db (which is needed to be run at the very beginning) emits pos
 Twill integration
 ------------------
 
-`Twill`_ is simple browser-like library for page browsing and tests. For :class:`HttpTestCase` and all inherited TestCases, :attr:`self.twill` is available with twill's ``get_browser()``. It's setted up lazily and is resetted and purged after test case.
+`Twill`_ is simple browser-like library for page browsing and tests.
+For :class:`HttpTestCase` and all inherited TestCases, :attr:`self.twill`
+is available with twill's ``get_browser()``. It's setted up lazily and is
+resetted and purged after test case.
 
 Browser has patched :attr:`go()` method: You can pass relative paths to it. Besides, it will throw :class:`HTTPError` (from urllib2), if server serves page with status 500.
 
@@ -279,5 +302,6 @@ TODO: List of whatever settings you can play with.
 .. _Selenium RC: http://seleniumhq.org/projects/remote-control/
 .. _CherryPy: http://www.cherrypy.org/
 .. _Twill: http://twill.idyll.org/
+.. _South: http://south.aeracode.org/
 
 
