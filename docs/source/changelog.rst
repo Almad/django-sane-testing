@@ -27,4 +27,4 @@ django-sane-testing changelog
 * Twill support improvements
 * `--persist-test-database option`
 
-* Switched to `github <https://github.com/Almad/django-sane-testing>`) as primary development place
+* Switched to `github <https://github.com/Almad/django-sane-testing>`_ as primary development place
