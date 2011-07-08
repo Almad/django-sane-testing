@@ -57,9 +57,10 @@ def is_test_database():
 
 def test_database_exists():
     from django.db import connection, DatabaseError
+    from django.conf import settings
 
     try:
-        if settings.DATABASE_ENGINE == 'sqlite3':
+        if getattr(settings, "DATABASE_ENGINE", None) == 'sqlite3':
             if not os.path.exists(settings.DATABASE_NAME):
                 raise DatabaseError()
         connection.cursor()
