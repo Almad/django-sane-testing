@@ -241,20 +241,20 @@ class CherryPyLiveServerPlugin(AbstractLiveServerPlugin):
     activation_parameter = '--with-cherrypyliveserver'
 
     def start_server(self, address='0.0.0.0', port=8000):
-         _application = AdminMediaHandler(WSGIHandler())
-    
-         def application(environ, start_response):
-             environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']
-             return _application(environ, start_response)
-    
-         from cherrypy.wsgiserver import CherryPyWSGIServer
-         from threading import Thread
-         self.httpd = CherryPyWSGIServer((address, port), application, server_name='django-test-http')
-         self.httpd_thread = Thread(target=self.httpd.start)
-         self.httpd_thread.start()
-         #FIXME: This could be avoided by passing self to thread class starting django
-         # and waiting for Event lock
-         sleep(.5)
+        _application = AdminMediaHandler(WSGIHandler())
+        
+        def application(environ, start_response):
+            environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']
+            return _application(environ, start_response)
+        
+        from cherrypy.wsgiserver import CherryPyWSGIServer
+        from threading import Thread
+        self.httpd = CherryPyWSGIServer((address, port), application, server_name='django-test-http')
+        self.httpd_thread = Thread(target=self.httpd.start)
+        self.httpd_thread.start()
+        #FIXME: This could be avoided by passing self to thread class starting django
+        # and waiting for Event lock
+        sleep(.5)
     
     def stop_test_server(self):
         if self.server_started:
