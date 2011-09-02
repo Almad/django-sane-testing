@@ -15,8 +15,10 @@ from django.core.urlresolvers import clear_url_caches
 
 try:
     from django.db import DEFAULT_DB_ALIAS
+    MULTIDB_SUPPORT = True
 except ImportError:
     DEFAULT_DB_ALIAS = 'default'
+    MULTIDB_SUPPORT = False
 
 import nose
 from nose.plugins import Plugin
@@ -180,7 +182,7 @@ class AbstractLiveServerPlugin(Plugin):
     def startTest(self, test):
         from django.conf import settings
         test_case = get_test_case_class(test)
-        test_instance = get_test_case_instance(test)
+        test_case_instance = get_test_case_instance(test)
         if not self.server_started and getattr(test_case, "start_live_server", False):
             if not self.check_database_multithread_compilant():
                 return
@@ -193,15 +195,15 @@ class AbstractLiveServerPlugin(Plugin):
         enable_test(test_case, 'http_plugin_started')
         
         # clear test client for test isolation
-        if test_instance:
-            test_instance.client = None
+        if test_case_instance:
+            test_case_instance.client = None
 
     def stopTest(self, test):
-        test_instance = get_test_case_instance(test)
-        if getattr(test_instance, "_twill", None):
+        test_case_instance = get_test_case_instance(test)
+        if getattr(test_case_instance, "_twill", None):
             from twill.commands import reset_browser
             reset_browser()
-            test_instance._twill = None
+            test_case_instance._twill = None
 
     def finalize(self, result):
         self.stop_test_server()
@@ -325,6 +327,7 @@ class DjangoPlugin(Plugin):
     def begin(self):
         from django.test.utils import setup_test_environment
         setup_test_environment()
+        self.test_database_created = False
 
     def prepareTestRunner(self, runner):
         """
@@ -336,20 +339,8 @@ class DjangoPlugin(Plugin):
         from django.conf import settings
         self.old_name = settings.DATABASE_NAME
 
-        connections = self._get_databases()
-
-        if not self.persist_test_database or test_database_exists():
-            #connection.creation.create_test_db(verbosity=False, autoclobber=True)
-            self.old_config = self.setup_databases(verbosity=False, autoclobber=True)
-
-            for db in connections:
-                if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
-                    getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
-
         flush_cache()
 
-        self.need_flush = False
-    
     def finalize(self, result):
         """
         At the end, tear down our testbed
@@ -357,7 +348,7 @@ class DjangoPlugin(Plugin):
         from django.test.utils import teardown_test_environment
         teardown_test_environment()
 
-        if not self.persist_test_database:
+        if not self.persist_test_database and getattr(self, 'test_database_created', None):
             self.teardown_databases(self.old_config, verbosity=False)
 #            from django.db import connection
 #            connection.creation.destroy_test_db(self.old_name, verbosity=False)
@@ -368,28 +359,22 @@ class DjangoPlugin(Plugin):
         When preparing test, check whether to make our database fresh
         """
         #####
-        ### FIXME: Method is a bit ugly, would be nice to refactor if's to more granular method
-        ### Additionally, it would be nice to separate handlings as plugins et al...but what about
-        ### the context?
+        ### FIXME: It would be nice to separate handlings as plugins et al...but what 
+        ### about the context?
         #####
         
-        from django.db import transaction, connection
-        try:
-            from django.db import DEFAULT_DB_ALIAS, connections
-        except ImportError:
-            MULTIDB_SUPPORT = False
-        else:
-            MULTIDB_SUPPORT = True
-
-        from django.test.testcases import call_command
         from django.core import mail
         from django.conf import settings
+        from django.db import transaction
         
         test_case = get_test_case_class(test)
-        self.previous_test_needed_flush = self.need_flush
+        test_case_instance = get_test_case_instance(test)
         mail.outbox = []
         enable_test(test_case, 'django_plugin_started')
-
+        
+        if hasattr(test_case_instance, 'is_skipped') and test_case_instance.is_skipped():
+            return
+        
         # clear URLs if needed
         if hasattr(test_case, 'urls'):
             test_case._old_root_urlconf = settings.ROOT_URLCONF
@@ -405,68 +390,39 @@ class DjangoPlugin(Plugin):
             # as unittests by definition do not interacts with database
             return
         
+        # create test database if not already created
+        if not self.test_database_created:
+            self._create_test_databases()
+        
         # make self.transaction available
         test_case.transaction = transaction
-        self.commits_could_be_used = False
-
-        if getattr(test_case, 'multi_db', False):
-            if not MULTIDB_SUPPORT:
-                test_case.skipped = True
-                return
-            else:
-                databases = connections
-        else:
-            if MULTIDB_SUPPORT:
-                databases = [DEFAULT_DB_ALIAS]
-            else:
-                databases = [connection]
-
-        if getattr(test_case, "database_flush", True):
-            for db in databases:
-                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
-            # it's possible that some garbage will be left after us, flush next time
-            self.need_flush = True
-            # commits are allowed during tests
-            self.commits_could_be_used = True
-            
-        # previous test needed flush, clutter could have stayed in database
-        elif self.previous_test_needed_flush is True:
-            for db in databases:
-                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
-            self.need_flush = False
-        
-        # otherwise we should have done our job
-        else:
-            self.need_flush = False
-            
         
         if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
             transaction.enter_transaction_management()
             transaction.managed(True)
         
-        # fixtures are loaded inside transaction, thus we don't need to flush
-        # between database_single_transaction tests when their fixtures differ
-        if hasattr(test_case, 'fixtures'):
-            if self.commits_could_be_used:
-                commit = True
-            else:
-                commit = False
-            for db in databases:
-                call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : commit, 'database' : db})
-
-
+        self._prepare_tests_fixtures(test_case)
+        
     def stopTest(self, test):
         """
-        After test is run, clear urlconf and caches
+        After test is run, clear urlconf, caches and database
         """
         from django.db import transaction
         from django.conf import settings
 
         test_case = get_test_case_class(test)
-
+        test_case_instance = get_test_case_instance(test)
+        
+        if hasattr(test_case_instance, 'is_skipped') and test_case_instance.is_skipped():
+            return
+        
         if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
             transaction.rollback()
             transaction.leave_transaction_management()
+
+        if getattr(test_case, "database_flush", True):
+            for db in self._get_databases_for_flush(test_case):
+                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
 
         if hasattr(test_case, '_old_root_urlconf'):
             settings.ROOT_URLCONF = test_case._old_root_urlconf
@@ -480,6 +436,50 @@ class DjangoPlugin(Plugin):
             from django.db import connection
             connections = {DEFAULT_DB_ALIAS : connection}
         return connections
+
+    def _get_databases_for_flush(self, test_case):
+        ''' Get databases for flush: according to test's multi_db attribute
+            only defuault db or all databases will be flushed.
+        '''
+        connections = self._get_databases()
+        if getattr(test_case, 'multi_db', False):
+            if not MULTIDB_SUPPORT:
+                raise RuntimeError('This test should be skipped but for a reason it is not')
+            else:
+                databases = connections
+        else:
+            if MULTIDB_SUPPORT:
+                databases = [DEFAULT_DB_ALIAS]
+            else:
+                databases = connections
+        return databases
+    
+    def _prepare_tests_fixtures(self, test_case):
+        # fixtures are loaded inside transaction, thus we don't need to flush
+        # between database_single_transaction tests when their fixtures differ
+        if hasattr(test_case, 'fixtures'):
+            if getattr(test_case, "database_flush", True):
+                # commits are allowed during tests
+                commit = True
+            else:
+                commit = False
+            for db in self._get_databases_for_flush(test_case):
+                call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : commit, 'database' : db})
+
+    def _create_test_databases(self):
+        from django.conf import settings
+        connections = self._get_databases()
+        if not self.persist_test_database or test_database_exists():
+            #connection.creation.create_test_db(verbosity=False, autoclobber=True)
+            self.old_config = self.setup_databases(verbosity=False, autoclobber=True)
+            self.test_database_created = True
+            
+            for db in connections:
+                if 'south' in settings.INSTALLED_APPS and getattr(settings, 'DST_RUN_SOUTH_MIGRATIONS', True):
+                    call_command('migrate', database=db)
+                
+                if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
+                    getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
 
 
 class DjangoTranslationPlugin(Plugin):

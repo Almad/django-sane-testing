@@ -15,6 +15,13 @@ from nose import SkipTest
 
 from djangosanetesting.utils import twill_patched_go, twill_xpath_go, extract_django_traceback, get_live_server_path
 
+try:
+    from django.db import DEFAULT_DB_ALIAS
+    MULTIDB_SUPPORT = True
+except ImportError:
+    DEFAULT_DB_ALIAS = 'default'
+    MULTIDB_SUPPORT = False
+
 __all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase",
            "HttpTestCase", "SeleniumTestCase", "TemplateTagTestCase")
 
@@ -91,7 +98,19 @@ class SaneTestCase(object):
     def setUp(self):
         self._check_skipped()
         self._check_plugins()
+        if getattr(self, 'multi_db', False) and not MULTIDB_SUPPORT:
+            raise self.SkipTest("I need multi db support to run, skipping..")
     
+    def is_skipped(self):
+        if getattr(self, 'multi_db', False) and not MULTIDB_SUPPORT:
+            return True
+        try:
+            self._check_skipped()
+            self._check_plugins()
+        except self.SkipTest, e:
+            return True
+        else:
+            return False
 
     def fail(self, *args, **kwargs):
         raise self.failureException(*args, **kwargs)
