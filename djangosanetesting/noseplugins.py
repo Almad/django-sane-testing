@@ -23,7 +23,6 @@ except ImportError:
 import nose
 from nose.plugins import Plugin
 
-import djangosanetesting
 import djangosanetesting.cache
 
 #from djagnosanetesting.cache import flush_django_cache
@@ -35,14 +34,14 @@ from djangosanetesting.utils import (
 
 __all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin", "ResultPlugin")
 
-def flush_cache(test_case=None):
+def flush_cache(test=None):
     from django.contrib.contenttypes.models import ContentType
     ContentType.objects.clear_cache()
 
     from django.conf import settings
 
-    if (test_case and hasattr(test_case, "flush_django_cache") and test_case.flush_django_cache) \
-        or (not hasattr(test_case, "flush_django_cache") and getattr(settings, "DST_FLUSH_DJANGO_CACHE", False)):
+    if (test and getattr_test(test, "flush_django_cache", False)) \
+        or (not hasattr_test(test, "flush_django_cache") and getattr(settings, "DST_FLUSH_DJANGO_CACHE", False)):
         djangosanetesting.cache.flush_django_cache()
 
 def get_test_case_class(nose_test):
@@ -51,11 +50,37 @@ def get_test_case_class(nose_test):
     else:
         return nose_test.test.__class__
 
-def get_test_case_instance(nose_test):
-    if isinstance(nose_test.test, nose.case.MethodTestCase):
-        return nose_test.test.test.im_self
+def get_test_case_method(nose_test):
+    if isinstance(nose_test.test, (nose.case.MethodTestCase, nose.case.FunctionTestCase)):
+        return nose_test.test.test
     else:
-        return None
+        return getattr(nose_test.test, nose_test.test._testMethodName)
+
+def get_test_case_instance(nose_test):
+    if not isinstance(nose_test.test, (nose.case.FunctionTestCase)):
+        return get_test_case_method(nose_test).im_self
+
+def hasattr_test(test, attr_name):
+    ''' hasattr from test method or test_case.
+    '''
+    if test is None:
+        return False
+    if hasattr(get_test_case_method(test), attr_name) or hasattr(get_test_case_instance(test), attr_name):
+        return True
+    else:
+        return False
+
+def getattr_test(test, attr_name, default = False):
+    ''' Get attribute from test method, if not found then form it's test_case instance
+        (meaning that test method have higher priority). If not found even
+        in test_case then return default.
+    '''
+    test_attr = getattr(get_test_case_method(test), attr_name, None)
+    if test_attr is not None:
+        return test_attr
+    else:
+        return getattr(get_test_case_instance(test), attr_name, default)
+
 
 def enable_test(test_case, plugin_attribute):
     if not getattr(test_case, plugin_attribute, False):
@@ -116,6 +141,7 @@ class StoppableWSGIServer(ThreadingMixIn, HTTPServer):
     def set_app(self,application):
         self.application = application
 
+
 class TestServerThread(threading.Thread):
     """Thread for running a http server while tests are running."""
 
@@ -150,6 +176,7 @@ class TestServerThread(threading.Thread):
         self._stopevent.set()
         threading.Thread.join(self, timeout)
 
+
 class AbstractLiveServerPlugin(Plugin):
     def __init__(self):
         Plugin.__init__(self)
@@ -178,12 +205,11 @@ class AbstractLiveServerPlugin(Plugin):
             #raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
         return True
 
-
     def startTest(self, test):
         from django.conf import settings
         test_case = get_test_case_class(test)
         test_case_instance = get_test_case_instance(test)
-        if not self.server_started and getattr(test_case, "start_live_server", False):
+        if not self.server_started and getattr_test(test, "start_live_server", False):
             if not self.check_database_multithread_compilant():
                 return
             self.start_server(
@@ -200,13 +226,14 @@ class AbstractLiveServerPlugin(Plugin):
 
     def stopTest(self, test):
         test_case_instance = get_test_case_instance(test)
-        if getattr(test_case_instance, "_twill", None):
+        if getattr_test(test, "_twill", None):
             from twill.commands import reset_browser
             reset_browser()
             test_case_instance._twill = None
 
     def finalize(self, result):
         self.stop_test_server()
+
 
 class DjangoLiveServerPlugin(AbstractLiveServerPlugin):
     """
@@ -262,6 +289,7 @@ class CherryPyLiveServerPlugin(AbstractLiveServerPlugin):
         if self.server_started:
             self.httpd.stop()
             self.server_started = False
+
 
 class DjangoPlugin(Plugin):
     """
@@ -384,8 +412,7 @@ class DjangoPlugin(Plugin):
         #####
         ### Database handling follows
         #####
-        
-        if getattr(test_case, 'no_database_interaction', False):
+        if getattr_test(test, 'no_database_interaction', False):
             # for true unittests, we can leave database handling for later,
             # as unittests by definition do not interacts with database
             return
@@ -397,11 +424,11 @@ class DjangoPlugin(Plugin):
         # make self.transaction available
         test_case.transaction = transaction
         
-        if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
+        if getattr_test(test, 'database_single_transaction'):
             transaction.enter_transaction_management()
             transaction.managed(True)
         
-        self._prepare_tests_fixtures(test_case)
+        self._prepare_tests_fixtures(test)
         
     def stopTest(self, test):
         """
@@ -412,22 +439,27 @@ class DjangoPlugin(Plugin):
 
         test_case = get_test_case_class(test)
         test_case_instance = get_test_case_instance(test)
-        
+
         if hasattr(test_case_instance, 'is_skipped') and test_case_instance.is_skipped():
             return
-        
-        if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
-            transaction.rollback()
-            transaction.leave_transaction_management()
-
-        if getattr(test_case, "database_flush", True):
-            for db in self._get_databases_for_flush(test_case):
-                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
 
         if hasattr(test_case, '_old_root_urlconf'):
             settings.ROOT_URLCONF = test_case._old_root_urlconf
             clear_url_caches()
-        flush_cache(test_case)
+        flush_cache(test)
+
+        if getattr_test(test, 'no_database_interaction', False):
+            # for true unittests, we can leave database handling for later,
+            # as unittests by definition do not interacts with database
+            return
+        
+        if getattr_test(test, 'database_single_transaction'):
+            transaction.rollback()
+            transaction.leave_transaction_management()
+
+        if getattr_test(test, "database_flush", True):
+            for db in self._get_tests_databases(test):
+                getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
 
     def _get_databases(self):
         try:
@@ -437,12 +469,12 @@ class DjangoPlugin(Plugin):
             connections = {DEFAULT_DB_ALIAS : connection}
         return connections
 
-    def _get_databases_for_flush(self, test_case):
+    def _get_tests_databases(self, test):
         ''' Get databases for flush: according to test's multi_db attribute
             only defuault db or all databases will be flushed.
         '''
         connections = self._get_databases()
-        if getattr(test_case, 'multi_db', False):
+        if getattr_test(test, 'multi_db', False):
             if not MULTIDB_SUPPORT:
                 raise RuntimeError('This test should be skipped but for a reason it is not')
             else:
@@ -454,17 +486,17 @@ class DjangoPlugin(Plugin):
                 databases = connections
         return databases
     
-    def _prepare_tests_fixtures(self, test_case):
+    def _prepare_tests_fixtures(self, test):
         # fixtures are loaded inside transaction, thus we don't need to flush
         # between database_single_transaction tests when their fixtures differ
-        if hasattr(test_case, 'fixtures'):
-            if getattr(test_case, "database_flush", True):
+        if hasattr_test(test, 'fixtures'):
+            if getattr_test(test, "database_flush", True):
                 # commits are allowed during tests
                 commit = True
             else:
                 commit = False
-            for db in self._get_databases_for_flush(test_case):
-                call_command('loaddata', *test_case.fixtures, **{'verbosity': 0, 'commit' : commit, 'database' : db})
+            for db in self._get_tests_databases(test):
+                call_command('loaddata', *getattr_test(test, 'fixtures'), **{'verbosity': 0, 'commit' : commit, 'database' : db})
 
     def _create_test_databases(self):
         from django.conf import settings
@@ -498,12 +530,11 @@ class DjangoTranslationPlugin(Plugin):
         Plugin.configure(self, options, config)
 
     def startTest(self, test):
-       # set translation, if allowed
-        test_case = get_test_case_class(test)
-        if getattr(test_case, "make_translations", None):
+        # set translation, if allowed
+        if getattr_test(test, "make_translations", None):
             from django.conf import settings
             from django.utils import translation
-            lang = getattr(test_case, "translation_language_code", None)
+            lang = getattr_test(test, "translation_language_code", None)
             if not lang:
                 lang = getattr(settings, "LANGUAGE_CODE", 'en-us')
             translation.activate(lang)
@@ -511,6 +542,7 @@ class DjangoTranslationPlugin(Plugin):
     def stopTest(self, test):
         from django.utils import translation
         translation.deactivate()
+
 
 class SeleniumPlugin(Plugin):
     """
@@ -545,7 +577,7 @@ class SeleniumPlugin(Plugin):
         selenium_module, selenium_cls = ".".join(selenium_import[:-1]), selenium_import[-1]
         selenium = getattr(import_module(selenium_module), selenium_cls)
         
-        if getattr(test_case, "selenium_start", False):
+        if getattr_test(test, "selenium_start", False):
             sel = selenium(
                       getattr(settings, "SELENIUM_HOST", 'localhost'),
                       int(getattr(settings, "SELENIUM_PORT", 4444)),
@@ -570,10 +602,10 @@ class SeleniumPlugin(Plugin):
                     #raise SkipTest("I can only assign selenium to TestCase instance; argument passing will be implemented later")
 
     def stopTest(self, test):
-        test_case = get_test_case_class(test)
-        if getattr(test_case, "selenium_started", False):
+        if getattr_test(test, "selenium_started", False):
             test.test.test.im_self.selenium.stop()
             test.test.test.im_self.selenium = None
+
 
 class SaneTestSelectionPlugin(Plugin):
     """ Accept additional options, so we can filter out test we don't want """
@@ -614,7 +646,7 @@ class SaneTestSelectionPlugin(Plugin):
     
     def startTest(self, test):
         test_case = get_test_case_class(test)
-        if getattr(test_case, "test_type", "unit") not in self.enabled_tests:
+        if getattr_test(test, "test_type", "unit") not in self.enabled_tests:
             test_case.skipped = True
             #raise SkipTest(u"Test type %s not enabled" % getattr(test_case, "test_type", "unit"))
 
