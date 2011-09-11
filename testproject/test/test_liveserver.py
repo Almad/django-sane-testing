@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+from StringIO import StringIO
 import urllib2
+
 from djangosanetesting.cases import HttpTestCase, SeleniumTestCase
 from djangosanetesting.utils import get_live_server_path
 
@@ -116,3 +118,12 @@ class TestTwill(HttpTestCase):
             self.assert_equals("500 Server error, traceback not found", err.msg)
         else:
             self.fail("500 expected")
+
+class TestSpynner(HttpTestCase):
+    def test_ok_loaded(self):
+        self.assert_true(True, self.spynner.load("%stesttwohundred/" % get_live_server_path()))
+
+    def test_ok_prage_loaded(self):
+        from lxml import etree
+        self.spynner.load("%stesttwohundred/" % get_live_server_path())
+        self.assert_equals('OKidoki', etree.parse(StringIO(self.spynner.html)).xpath("//body")[0].text)

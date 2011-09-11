@@ -13,7 +13,7 @@ from nose.tools import (
 )
 from nose import SkipTest
 
-from djangosanetesting.utils import twill_patched_go, twill_xpath_go, extract_django_traceback
+from djangosanetesting.utils import twill_patched_go, twill_xpath_go, extract_django_traceback, get_live_server_path
 
 __all__ = ("UnitTestCase", "DatabaseTestCase", "DestructiveDatabaseTestCase",
            "HttpTestCase", "SeleniumTestCase", "TemplateTagTestCase")
@@ -169,13 +169,14 @@ class HttpTestCase(DestructiveDatabaseTestCase):
         super(HttpTestCase, self).__init__(*args, **kwargs)
 
         self._twill = None
+        self._spynner = None
 
     def get_twill(self):
         if not self._twill:
             try:
                 import twill
             except ImportError:
-                raise SkipTest("Twill must be installed if You want to use it")
+                raise SkipTest("Twill must be installed if you want to use it")
 
             from twill import get_browser
 
@@ -189,6 +190,20 @@ class HttpTestCase(DestructiveDatabaseTestCase):
         return self._twill
 
     twill = property(fget=get_twill)
+
+    def get_spynner(self):
+        if not self._spynner:
+            try:
+                import spynner
+            except ImportError:
+                raise SkipTest("Spynner must be installed if you want to use it")
+
+            self._spynner = spynner.Browser()
+
+        return self._spynner
+
+    spynner = property(fget=get_spynner)
+
 
     def assert_code(self, code):
         self.assert_equals(int(code), self.twill.get_code())
@@ -206,6 +221,11 @@ class HttpTestCase(DestructiveDatabaseTestCase):
             else:
                 raise err
 
+    def tearDown(self):
+        if self._spynner:
+            self._spynner.close()
+
+        super(HttpTestCase, self).tearDown()
 
 class SeleniumTestCase(HttpTestCase):
     """
