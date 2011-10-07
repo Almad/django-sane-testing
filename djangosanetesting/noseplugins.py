@@ -27,7 +27,7 @@ import djangosanetesting.cache
 #from djagnosanetesting.cache import flush_django_cache
 from djangosanetesting.selenium.driver import selenium
 from djangosanetesting.utils import (
-    get_live_server_path, test_database_exists,
+    get_databases, get_live_server_path, test_databases_exist,
     DEFAULT_LIVE_SERVER_ADDRESS, DEFAULT_LIVE_SERVER_PORT,
 )
 
@@ -283,7 +283,7 @@ class DjangoPlugin(Plugin):
 
     def setup_databases(self, verbosity, autoclobber, **kwargs):
         # Taken from Django 1.2 code, (C) respective Django authors. Modified for backward compatibility by me
-        connections = self._get_databases()
+        connections = get_databases()
         old_names = []
         mirrors = []
         for alias in connections:
@@ -304,7 +304,7 @@ class DjangoPlugin(Plugin):
 
     def teardown_databases(self, old_config, verbosity, **kwargs):
         # Taken from Django 1.2 code, (C) respective Django authors
-        connections = self._get_databases()
+        connections = get_databases()
         old_names, mirrors = old_config
         # Point all the mirrors back to the originals
         for alias, connection in mirrors:
@@ -328,10 +328,9 @@ class DjangoPlugin(Plugin):
         from django.conf import settings
         self.old_name = settings.DATABASE_NAME
 
-        connections = self._get_databases()
+        connections = get_databases()
 
-        if not self.persist_test_database or test_database_exists():
-            #connection.creation.create_test_db(verbosity=False, autoclobber=True)
+        if not self.persist_test_database or test_databases_exist():
             self.old_config = self.setup_databases(verbosity=False, autoclobber=True)
 
             for db in connections:
@@ -466,14 +465,6 @@ class DjangoPlugin(Plugin):
             settings.ROOT_URLCONF = test_case._old_root_urlconf
             clear_url_caches()
         flush_cache(test_case)
-
-    def _get_databases(self):
-        try:
-            from django.db import connections
-        except ImportError:
-            from django.db import connection
-            connections = {DEFAULT_DB_ALIAS : connection}
-        return connections
 
 
 class DjangoTranslationPlugin(Plugin):
