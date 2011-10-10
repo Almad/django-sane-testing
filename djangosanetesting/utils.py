@@ -60,8 +60,16 @@ def get_databases():
     try:
         from django.db import connections
     except ImportError:
+        from django.conf import settings
         from django.db import connection
-        connections = {DEFAULT_DB_ALIAS : connection}
+
+        if settings.TEST_DATABASE_NAME:
+            connection['TEST_NAME'] = settings.TEST_DATABASE_NAME
+
+        connections = {
+            DEFAULT_DB_ALIAS : connection
+        }
+
     return connections
 
 

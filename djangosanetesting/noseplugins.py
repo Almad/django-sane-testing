@@ -168,12 +168,12 @@ class AbstractLiveServerPlugin(Plugin):
 
     def check_database_multithread_compilant(self):
         # When using memory database, complain as we'd use indepenent databases
-        from django.conf import settings
-        if settings.DATABASE_ENGINE == 'sqlite3' \
-            and (not getattr(settings, 'TEST_DATABASE_NAME', False) or settings.TEST_DATABASE_NAME == ':memory:'):
-            self.skipped = True
-            return False
-            #raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
+        connections = get_databases()
+        for alias in connections:
+            database = connections[alias]
+            if database.settings_dict['NAME'] == ':memory:' and database.settings_dict['ENGINE'] in ('django.db.backends.sqlite3', 'sqlite3'):
+                self.skipped = True
+                return False
         return True
 
 
