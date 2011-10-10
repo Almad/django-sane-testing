@@ -326,7 +326,6 @@ class DjangoPlugin(Plugin):
         # database at all
         
         from django.conf import settings
-        self.old_name = settings.DATABASE_NAME
 
         connections = get_databases()
 

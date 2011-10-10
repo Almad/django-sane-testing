@@ -63,7 +63,6 @@ class DstNoseTestSuiteRunner(DjangoTestSuiteRunner):
         from django.conf import settings
     
         utils.setup_test_environment()
-        old_db_name = settings.DATABASE_NAME
     
         result_plugin = ResultPlugin()
         plugins = [DjangoPlugin(), SeleniumPlugin(), DjangoTranslationPlugin(), result_plugin]
