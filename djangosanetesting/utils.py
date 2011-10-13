@@ -2,6 +2,9 @@ import os
 from functools import wraps
 import urllib2
 
+from django.core.servers.basehttp import AdminMediaHandler
+from django.core.handlers.wsgi import WSGIHandler
+
 DEFAULT_LIVE_SERVER_PROTOCOL = "http"
 DEFAULT_LIVE_SERVER_PORT = 8000
 DEFAULT_LIVE_SERVER_ADDRESS = '0.0.0.0'
@@ -178,4 +181,16 @@ def mock_settings(settings_attribute, value):
             return retval
         return wrapped
     return wrapper
+
+
+def get_server_handler():
+    handler = AdminMediaHandler(WSGIHandler())
+    try:
+        from django.contrib.staticfiles.handlers import StaticFilesHandler
+        handler = StaticFilesHandler(handler)
+    except:
+        pass
+
+    return handler
+
 

@@ -9,8 +9,7 @@ from SocketServer import ThreadingMixIn
 from time import sleep
 
 from django.core.management import call_command
-from django.core.handlers.wsgi import WSGIHandler
-from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
+from django.core.servers.basehttp import  WSGIRequestHandler, WSGIServerException
 from django.core.urlresolvers import clear_url_caches
 from django.test import TestCase as DjangoTestCase
 
@@ -30,6 +29,7 @@ import djangosanetesting.cache
 from djangosanetesting.selenium.driver import selenium
 from djangosanetesting.utils import (
     get_databases, get_live_server_path, test_databases_exist,
+    get_server_handler,
     DEFAULT_LIVE_SERVER_ADDRESS, DEFAULT_LIVE_SERVER_PORT,
 )
 
@@ -130,12 +130,7 @@ class TestServerThread(threading.Thread):
     def run(self):
         """Sets up test server and loops over handling http requests."""
         try:
-            handler = AdminMediaHandler(WSGIHandler())
-            try:
-                from django.contrib.staticfiles.handlers import StaticFilesHandler
-                handler = StaticFilesHandler(handler)
-            except:
-                pass
+            handler = get_server_handler()
             server_address = (self.address, self.port)
             httpd = StoppableWSGIServer(server_address, WSGIRequestHandler)
             #httpd = basehttp.WSGIServer(server_address, basehttp.WSGIRequestHandler)
@@ -166,7 +161,7 @@ class AbstractLiveServerPlugin(Plugin):
 
     def configure(self, options, config):
         Plugin.configure(self, options, config)
-    
+
     def start_server(self):
         raise NotImplementedError()
 
@@ -248,11 +243,11 @@ class CherryPyLiveServerPlugin(AbstractLiveServerPlugin):
     activation_parameter = '--with-cherrypyliveserver'
 
     def start_server(self, address='0.0.0.0', port=8000):
-        _application = AdminMediaHandler(WSGIHandler())
-        
+        handler = get_server_handler()
+ 
         def application(environ, start_response):
             environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']
-            return _application(environ, start_response)
+            return handler(environ, start_response)
         
         from cherrypy.wsgiserver import CherryPyWSGIServer
         from threading import Thread
