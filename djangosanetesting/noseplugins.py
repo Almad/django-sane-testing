@@ -12,6 +12,7 @@ from django.core.management import call_command
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
 from django.core.urlresolvers import clear_url_caches
+from django.test import TestCase as DjangoTestCase
 
 try:
     from django.db import DEFAULT_DB_ALIAS
@@ -365,6 +366,11 @@ class DjangoPlugin(Plugin):
         """
         When preparing test, check whether to make our database fresh
         """
+
+        test_case = get_test_case_class(test)
+        if issubclass(test_case, DjangoTestCase):
+            return
+
         #####
         ### FIXME: Method is a bit ugly, would be nice to refactor if's to more granular method
         ### Additionally, it would be nice to separate handlings as plugins et al...but what about
@@ -382,7 +388,6 @@ class DjangoPlugin(Plugin):
         from django.core import mail
         from django.conf import settings
         
-        test_case = get_test_case_class(test)
         self.previous_test_needed_flush = self.need_flush
         mail.outbox = []
         enable_test(test_case, 'django_plugin_started')
@@ -456,10 +461,14 @@ class DjangoPlugin(Plugin):
         """
         After test is run, clear urlconf and caches
         """
+
+        test_case = get_test_case_class(test)
+        if issubclass(test_case, DjangoTestCase):
+            return
+
         from django.db import transaction
         from django.conf import settings
 
-        test_case = get_test_case_class(test)
 
         if (hasattr(test_case, "database_single_transaction") and test_case.database_single_transaction is True):
             transaction.rollback()
