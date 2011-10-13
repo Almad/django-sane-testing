@@ -129,6 +129,11 @@ class TestServerThread(threading.Thread):
         """Sets up test server and loops over handling http requests."""
         try:
             handler = AdminMediaHandler(WSGIHandler())
+            try:
+                from django.contrib.staticfiles.handlers import StaticFilesHandler
+                handler = StaticFilesHandler(handler)
+            except:
+                pass
             server_address = (self.address, self.port)
             httpd = StoppableWSGIServer(server_address, WSGIRequestHandler)
             #httpd = basehttp.WSGIServer(server_address, basehttp.WSGIRequestHandler)
