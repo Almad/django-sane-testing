@@ -20,6 +20,7 @@ except ImportError:
     DEFAULT_DB_ALIAS = 'default'
 
 import nose
+from nose import SkipTest
 from nose.plugins import Plugin
 
 import djangosanetesting
@@ -189,7 +190,7 @@ class AbstractLiveServerPlugin(Plugin):
         test_instance = get_test_case_instance(test)
         if not self.server_started and getattr(test_case, "start_live_server", False):
             if not self.check_database_multithread_compilant():
-                return
+                raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
             self.start_server(
                 address=getattr(settings, "LIVE_SERVER_ADDRESS", DEFAULT_LIVE_SERVER_ADDRESS),
                 port=int(getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT))
