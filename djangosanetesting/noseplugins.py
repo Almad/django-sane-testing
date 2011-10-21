@@ -242,7 +242,7 @@ class CherryPyLiveServerPlugin(AbstractLiveServerPlugin):
 
     def start_server(self, address='0.0.0.0', port=8000):
          _application = AdminMediaHandler(WSGIHandler())
-    
+
          def application(environ, start_response):
              environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']
              return _application(environ, start_response)
@@ -290,6 +290,14 @@ class DjangoPlugin(Plugin):
             connections = {DEFAULT_DB_ALIAS : connection}
         old_names = []
         mirrors = []
+
+        from django.conf import settings
+        if 'south' in settings.INSTALLED_APPS:
+            from south.management.commands import patch_for_test_db_setup
+
+            settings.SOUTH_TESTS_MIGRATE = getattr(settings, 'DST_RUN_SOUTH_MIGRATIONS', True)
+            patch_for_test_db_setup()
+
         for alias in connections:
             connection = connections[alias]
             # If the database is a test mirror, redirect it's connection
@@ -346,9 +354,6 @@ class DjangoPlugin(Plugin):
             self.old_config = self.setup_databases(verbosity=False, autoclobber=True)
 
             for db in connections:
-                if 'south' in settings.INSTALLED_APPS and getattr(settings, 'DST_RUN_SOUTH_MIGRATIONS', True):
-                    call_command('migrate', database=db)
-
                 if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
                     getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
 
@@ -382,9 +387,10 @@ class DjangoPlugin(Plugin):
         from django.db import transaction, connection
         try:
             from django.db import DEFAULT_DB_ALIAS, connections
-            MULTIDB_SUPPORT = True
         except ImportError:
             MULTIDB_SUPPORT = False
+        else:
+            MULTIDB_SUPPORT = True
 
         from django.test.testcases import call_command
         from django.core import mail
