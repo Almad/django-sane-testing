@@ -21,6 +21,9 @@ from djangosanetesting.noseplugins import (
 
 __all__ = ("DstNoseTestSuiteRunner",)
 
+# This file doen't contain tests
+__test__ = False
+
 """
 Act as Django test runner, but use nose. Enable common django-sane-testing
 plugins by default.
