@@ -533,10 +533,17 @@ class SeleniumPlugin(Plugin):
         """
 
         from django.conf import settings
-        
+        from django.utils.importlib import import_module
+
         test_case = get_test_case_class(test)
 
         enable_test(test_case, 'selenium_plugin_started')
+
+        # import selenium class to use
+        selenium_import = getattr(settings, "DST_SELENIUM_DRIVER",
+                            "djangosanetesting.selenium.driver.selenium").split(".")
+        selenium_module, selenium_cls = ".".join(selenium_import[:-1]), selenium_import[-1]
+        selenium = getattr(import_module(selenium_module), selenium_cls)
         
         if getattr(test_case, "selenium_start", False):
             sel = selenium(
