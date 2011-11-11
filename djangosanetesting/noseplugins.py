@@ -533,10 +533,14 @@ class SeleniumPlugin(Plugin):
         enable_test(test_case, 'selenium_plugin_started')
         
         if getattr(test_case, "selenium_start", False):
+            browser = getattr(test_case, 'selenium_browser_command', None)
+            if browser is None:
+                browser = getattr(settings, "SELENIUM_BROWSER_COMMAND", '*opera')
+
             sel = selenium(
                       getattr(settings, "SELENIUM_HOST", 'localhost'),
                       int(getattr(settings, "SELENIUM_PORT", 4444)),
-                      getattr(settings, "SELENIUM_BROWSER_COMMAND", '*opera'),
+                      browser,
                       getattr(settings, "SELENIUM_URL_ROOT", get_live_server_path()),
                   )
             try:
