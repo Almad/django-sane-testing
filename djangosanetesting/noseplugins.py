@@ -59,9 +59,8 @@ def get_test_case_class(nose_test):
         return nose_test.test.__class__
 
 def get_test_case_method(nose_test):
-    if not hasattr(nose_test, "test"):
-        raise ValueError("Passed instance %r that has no 'test' attribute (not an nose TestCase?). This is probably bug, please report." % repr(nose_test))
-
+    if not hasattr(nose_test, 'test'): # not test method/functoin, probably test module or test class (from startContext)
+        return None
     if isinstance(nose_test.test, (nose.case.MethodTestCase, nose.case.FunctionTestCase)):
         return nose_test.test.test
     else:
@@ -340,21 +339,7 @@ class DjangoPlugin(Plugin):
                 # when used from startTest, nose-wrapped testcase is provided -- while now,
                 # we have 'bare' test case.
 
-                # FIXME: Destroy cut&paste and call self._prepare_tests_fixtures,
-                # but beware -- we are passing actual TestCase instance as given
-                # by context, not a nose-wrapped method as in startTest
-                # Also, check for duplicate flush it startTest is called after
-                # startContext
-                test = context
-                if getattr(test, 'fixtures', False):
-                    if getattr(test, "database_flush", True):
-                        # commits are allowed during tests
-                        commit = True
-                    else:
-                        commit = False
-
-                    for db in self._get_tests_databases(getattr(test, 'multi_db', [])):
-                        call_command('loaddata', *getattr(test, 'fixtures'), **{'verbosity': 0, 'commit' : commit, 'database' : db})
+                self._prepare_tests_fixtures(context)
 
     def stopContext(self, context):
         if ismodule(context) or is_test_case_class(context):
