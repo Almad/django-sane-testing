@@ -563,11 +563,29 @@ class DjangoPlugin(Plugin):
     def _create_test_databases(self):
         from django.conf import settings
         connections = self._get_databases()
-        if not self.persist_test_database or test_database_exists():
-            #connection.creation.create_test_db(verbosity=False, autoclobber=True)
+
+        database_created = False
+        if not self.persist_test_database:
             self.old_config = self.setup_databases(verbosity=False, autoclobber=True)
-            self.test_database_created = True
-            
+            database_created = self.test_database_created = True
+        else:
+            # switch to test database, find out whether it exists, if so, use it, otherwise create a new:
+            for connection in connections.all():
+                connection.close()
+                old_db_name = connection.settings_dict["NAME"]
+                connection.settings_dict["NAME"] = connection.creation._get_test_db_name()
+                try:
+                    connection.cursor()
+                except Exception:
+                    # test database doesn't exist, create it as normally:
+                    connection.settings_dict["NAME"] = old_db_name # return original db name
+                    connection.creation.create_test_db()
+                    database_created = True
+
+                connection.features.confirm()
+                self.test_database_created = True
+
+        if database_created:
             for db in connections:
                 if 'south' in settings.INSTALLED_APPS and getattr(settings, 'DST_RUN_SOUTH_MIGRATIONS', True):
                     call_command('migrate', database=db)
