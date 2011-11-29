@@ -4,10 +4,6 @@ import unittest
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import get_app, get_apps
-from django.test import _doctest as doctest
-from django.test.utils import setup_test_environment, teardown_test_environment
-from django.test.testcases import OutputChecker, DocTestRunner, TestCase
 
 #This module was taken from Django 1.2.4 source code and embedded for backward
 #compatibility.
@@ -22,8 +18,6 @@ except NameError:
 
 # The module name for tests outside models.py
 TEST_MODULE = 'tests'
-
-doctestOutputChecker = OutputChecker()
 
 class DjangoTestRunner(unittest.TextTestRunner):
 
@@ -95,6 +89,10 @@ def get_tests(app_module):
 
 def build_suite(app_module):
     "Create a complete Django test suite for the provided application module"
+    from django.test import _doctest as doctest
+    from django.test.testcases import OutputChecker, DocTestRunner
+    doctestOutputChecker = OutputChecker()
+
     suite = unittest.TestSuite()
 
     # Load unit and doctests in the models.py module. If module has
@@ -143,6 +141,7 @@ def build_test(label):
     #
     # First, look for TestCase instances with a name that matches
     #
+    from django.db.models import get_app
     app_module = get_app(parts[0])
     test_module = get_tests(app_module)
     TestClass = getattr(app_module, parts[1], None)
@@ -168,6 +167,9 @@ def build_test(label):
     #
     # If there isn't a TestCase, look for a doctest that matches
     #
+    from django.test import _doctest as doctest
+    from django.test.testcases import OutputChecker, DocTestRunner
+    doctestOutputChecker = OutputChecker()
     tests = []
     for module in app_module, test_module:
         try:
@@ -271,10 +273,14 @@ class DjangoTestSuiteRunner(object):
         self.failfast = failfast
 
     def setup_test_environment(self, **kwargs):
+        from django.test.utils import setup_test_environment
         setup_test_environment()
         settings.DEBUG = False
 
     def build_suite(self, test_labels, extra_tests=None, **kwargs):
+        from django.db.models import get_apps
+        from django.test.testcases import TestCase
+
         suite = unittest.TestSuite()
 
         if test_labels:
@@ -367,6 +373,7 @@ class DjangoTestSuiteRunner(object):
                 connection.settings_dict['NAME'] = old_name
 
     def teardown_test_environment(self, **kwargs):
+        from django.test.utils import teardown_test_environment
         teardown_test_environment()
 
     def suite_result(self, suite, result, **kwargs):
@@ -391,6 +398,8 @@ class DjangoTestSuiteRunner(object):
 
         Returns the number of tests that failed.
         """
+        from django.test.utils import (
+            setup_test_environment, teardown_test_environment)
         self.setup_test_environment()
         suite = self.build_suite(test_labels, extra_tests)
         old_config = self.setup_databases()
