@@ -60,5 +60,7 @@ CACHE_BACKEND = 'locmem://'
 DST_FLUSH_DJANGO_CACHE = True
 NONSENSICAL_SETTING_ATTRIBUTE_FOR_MOCK_TESTING = "owned"
 
+SITE_ID=1
+
 from config import *
 

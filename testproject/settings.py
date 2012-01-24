@@ -64,5 +64,7 @@ NONSENSICAL_SETTING_ATTRIBUTE_FOR_MOCK_TESTING = "owned"
 
 DEBUG = True
 
+SITE_ID=1
+
 from config import *
 
