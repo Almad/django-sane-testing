@@ -18,4 +18,6 @@ MANIFEST
 /bin/
 /include/
 /lib*
-nbproject
+/nbproject
+/idea
+
