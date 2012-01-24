@@ -92,3 +92,9 @@ def unit(args, nose_run_kwargs=None):
         defaultTest = test_project_module,
         **nose_run_kwargs
     )
+
+@task
+@consume_args
+@needs('unit')
+def test(args):
+    pass
