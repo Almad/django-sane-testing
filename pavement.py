@@ -83,7 +83,7 @@ def unit(args, nose_run_kwargs=None):
 
     os.chdir(test_project_module)
 
-    argv = ["--with-django", "--with-cherrypyliveserver", "--with-selenium"] + args
+    argv = ["--with-django", "--with-cherrypyliveserver", "--with-selenium", '--with-djangotranslations'] + args
 
     nose_run_kwargs = nose_run_kwargs or {}
 
