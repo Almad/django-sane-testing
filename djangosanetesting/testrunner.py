@@ -6,7 +6,6 @@ from nose.config import Config, all_config_files
 from nose.plugins.manager import DefaultPluginManager
 
 from django.core.management.base import BaseCommand
-from django.test import utils
 try:
     from django.test.simple import DjangoTestSuiteRunner
 except ImportError:
@@ -62,6 +61,7 @@ class DstNoseTestSuiteRunner(DjangoTestSuiteRunner):
         # Prepare django for testing.
         from django.conf import settings
     
+        from django.test import utils
         utils.setup_test_environment()
         old_db_name = settings.DATABASE_NAME
     
