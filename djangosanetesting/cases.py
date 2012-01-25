@@ -141,7 +141,6 @@ class UnitTestCase(SaneTestCase):
     client = property(fget=get_django_client, fset=set_django_client)
 
 
-
 class DatabaseTestCase(SaneTestCase):
     """
     Tests using database for models in simple: rollback on teardown and we're out.
@@ -164,15 +163,44 @@ class DatabaseTestCase(SaneTestCase):
         self._django_client = value
     
     client = property(fget=get_django_client, fset=set_django_client)
-    
-    
+
+
+class NoCleanupDatabaseTestCase(DatabaseTestCase):
+    ''' 
+    Initiates test database but have no cleanup utility at all (no rollback, no flush).
+    Useful for example when cleanup is done by module-level attribute or pure read-only tests.
+    '''
+    database_single_transaction = False
+
+
 class DestructiveDatabaseTestCase(DatabaseTestCase):
     """
     Test behaving so destructively that it needs database to be flushed.
     """
-    database_single_transaction = True
+    database_single_transaction = False
     database_flush = True
     test_type = "destructivedatabase"
+
+
+class NonIsolatedDatabaseTestCase(DatabaseTestCase):
+    """
+    Like DatabaseTestCase, but rollback transaction only once - after test case. 
+    That means tests in test case are not isolated but run faster.
+    """
+    database_single_transaction = False
+    database_flush = False
+    database_single_transaction_alfter_case = True
+
+
+class NonIsolatedDestructiveDatabaseTestCase(DestructiveDatabaseTestCase):
+    """
+    Like DestructiveDatabaseTestCase, but flushing db only once - after test case. 
+    That means tests in test case are not isolated but run much faster.
+    """
+    database_single_transaction = False
+    database_flush = False
+    database_flush_alfter_case = True
+
 
 class HttpTestCase(DestructiveDatabaseTestCase):
     """

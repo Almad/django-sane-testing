@@ -7,23 +7,20 @@ import os
 from BaseHTTPServer import HTTPServer
 from SocketServer import ThreadingMixIn
 from time import sleep
+from inspect import ismodule, isclass
+import unittest
 
 from django.core.management import call_command
 from django.core.handlers.wsgi import WSGIHandler
 from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
 from django.core.urlresolvers import clear_url_caches
 
-try:
-    from django.db import DEFAULT_DB_ALIAS
-    MULTIDB_SUPPORT = True
-except ImportError:
-    DEFAULT_DB_ALIAS = 'default'
-    MULTIDB_SUPPORT = False
-
 import nose
 from nose.plugins import Plugin
 
-import djangosanetesting.cache
+import djangosanetesting
+from djangosanetesting import MULTIDB_SUPPORT, DEFAULT_DB_ALIAS
+from djangosanetesting.cache import flush_django_cache
 
 #from djagnosanetesting.cache import flush_django_cache
 from djangosanetesting.selenium.driver import selenium
@@ -31,8 +28,11 @@ from djangosanetesting.utils import (
     get_live_server_path, test_database_exists,
     DEFAULT_LIVE_SERVER_ADDRESS, DEFAULT_LIVE_SERVER_PORT,
 )
+TEST_CASE_CLASSES = (djangosanetesting.cases.SaneTestCase, unittest.TestCase)
 
 __all__ = ("CherryPyLiveServerPlugin", "DjangoLiveServerPlugin", "DjangoPlugin", "SeleniumPlugin", "SaneTestSelectionPlugin", "ResultPlugin")
+
+
 
 def flush_cache(test=None):
     from django.contrib.contenttypes.models import ContentType
@@ -42,45 +42,60 @@ def flush_cache(test=None):
 
     if (test and getattr_test(test, "flush_django_cache", False)) \
         or (not hasattr_test(test, "flush_django_cache") and getattr(settings, "DST_FLUSH_DJANGO_CACHE", False)):
-        djangosanetesting.cache.flush_django_cache()
+        flush_django_cache()
+
+def is_test_case_class(nose_test):
+    if isclass(nose_test) and issubclass(nose_test, TEST_CASE_CLASSES):
+        return True
+    else:
+        return False
 
 def get_test_case_class(nose_test):
+    if ismodule(nose_test) or is_test_case_class(nose_test):
+        return nose_test 
     if isinstance(nose_test.test, nose.case.MethodTestCase):
         return nose_test.test.test.im_class
     else:
         return nose_test.test.__class__
 
 def get_test_case_method(nose_test):
+    if not hasattr(nose_test, "test"):
+        raise ValueError("Passed instance %r that has no 'test' attribute (not an nose TestCase?). This is probably bug, please report." % repr(nose_test))
+
     if isinstance(nose_test.test, (nose.case.MethodTestCase, nose.case.FunctionTestCase)):
         return nose_test.test.test
     else:
         return getattr(nose_test.test, nose_test.test._testMethodName)
 
 def get_test_case_instance(nose_test):
-    if not isinstance(nose_test.test, (nose.case.FunctionTestCase)):
+    if ismodule(nose_test) or is_test_case_class(nose_test):
+        return nose_test 
+    if getattr(nose_test, 'test') and not isinstance(nose_test.test, (nose.case.FunctionTestCase)):
         return get_test_case_method(nose_test).im_self
 
-def hasattr_test(test, attr_name):
+def hasattr_test(nose_test, attr_name):
     ''' hasattr from test method or test_case.
     '''
-    if test is None:
+
+    if nose_test is None:
         return False
-    if hasattr(get_test_case_method(test), attr_name) or hasattr(get_test_case_instance(test), attr_name):
+    elif ismodule(nose_test) or is_test_case_class(nose_test):
+        return hasattr(nose_test, attr_name)
+    elif hasattr(get_test_case_method(nose_test), attr_name) or hasattr(get_test_case_instance(nose_test), attr_name):
         return True
     else:
         return False
 
-def getattr_test(test, attr_name, default = False):
+def getattr_test(nose_test, attr_name, default = False):
     ''' Get attribute from test method, if not found then form it's test_case instance
         (meaning that test method have higher priority). If not found even
         in test_case then return default.
     '''
-    test_attr = getattr(get_test_case_method(test), attr_name, None)
+    test_attr = getattr(get_test_case_method(nose_test), attr_name, None)
     if test_attr is not None:
         return test_attr
     else:
-        return getattr(get_test_case_instance(test), attr_name, default)
-
+        return getattr(get_test_case_instance(nose_test), attr_name, default)
 
 def enable_test(test_case, plugin_attribute):
     if not getattr(test_case, plugin_attribute, False):
@@ -88,6 +103,7 @@ def enable_test(test_case, plugin_attribute):
 
 def flush_database(test_case, database=DEFAULT_DB_ALIAS):
     call_command('flush', verbosity=0, interactive=False, database=database)
+
 
 #####
 ### Okey, this is hack because of #14, or Django's #3357
@@ -299,6 +315,66 @@ class DjangoPlugin(Plugin):
     name = 'django'
     env_opt = 'DST_PERSIST_TEST_DATABASE'
 
+    def startContext(self, context):
+        if ismodule(context) or is_test_case_class(context):
+            if ismodule(context):
+                attr_suffix = ''
+            else:
+                attr_suffix = '_after_all_tests'
+            if getattr(context, 'database_single_transaction' + attr_suffix, False) \
+                or getattr(context, 'fixtures', None):
+                #TODO: When no test case in this module needing database is run (for example 
+                #      user selected only one unitTestCase), database should not be initialized.
+                #      So it would be best if db is initialized when first test case needing 
+                #      database is run. 
+                
+                # create test database if not already created
+                if not self.test_database_created:
+                    self._create_test_databases()
+
+                if getattr(context, 'database_single_transaction' + attr_suffix, False):
+                    from django.db import transaction
+                    transaction.enter_transaction_management()
+                    transaction.managed(True)
+
+                # when used from startTest, nose-wrapped testcase is provided -- while now,
+                # we have 'bare' test case.
+
+                # FIXME: Destroy cut&paste and call self._prepare_tests_fixtures,
+                # but beware -- we are passing actual TestCase instance as given
+                # by context, not a nose-wrapped method as in startTest
+                # Also, check for duplicate flush it startTest is called after
+                # startContext
+                test = context
+                if getattr(test, 'fixtures', False):
+                    if getattr(test, "database_flush", True):
+                        # commits are allowed during tests
+                        commit = True
+                    else:
+                        commit = False
+
+                    for db in self._get_tests_databases(getattr(test, 'multi_db', [])):
+                        call_command('loaddata', *getattr(test, 'fixtures'), **{'verbosity': 0, 'commit' : commit, 'database' : db})
+
+    def stopContext(self, context):
+        if ismodule(context) or is_test_case_class(context):
+            from django.conf import settings
+            from django.db import transaction
+
+            if ismodule(context):
+                attr_suffix = ''
+            else:
+                attr_suffix = '_after_all_tests'
+
+            if self.test_database_created:
+                if getattr(context, 'database_single_transaction' + attr_suffix, False):
+                    transaction.rollback()
+                    transaction.leave_transaction_management()
+
+                if getattr(context, "database_flush" + attr_suffix, None):
+                    for db in self._get_tests_databases(getattr(context, 'multidb', False)):
+                        getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
+
     def options(self, parser, env=os.environ):
         Plugin.options(self, parser, env)
         
@@ -350,7 +426,8 @@ class DjangoPlugin(Plugin):
         # Destroy all the non-mirror databases
         for connection, old_name in old_names:
             connection.creation.destroy_test_db(old_name, verbosity)
-
+        
+        self.test_database_created = False
 
     def begin(self):
         from django.test.utils import setup_test_environment
@@ -375,7 +452,7 @@ class DjangoPlugin(Plugin):
         """
         from django.test.utils import teardown_test_environment
         teardown_test_environment()
-
+        
         if not self.persist_test_database and getattr(self, 'test_database_created', None):
             self.teardown_databases(self.old_config, verbosity=False)
 #            from django.db import connection
@@ -458,7 +535,7 @@ class DjangoPlugin(Plugin):
             transaction.leave_transaction_management()
 
         if getattr_test(test, "database_flush", True):
-            for db in self._get_tests_databases(test):
+            for db in self._get_tests_databases(getattr_test(test, 'multi_db')):
                 getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
 
     def _get_databases(self):
@@ -469,12 +546,12 @@ class DjangoPlugin(Plugin):
             connections = {DEFAULT_DB_ALIAS : connection}
         return connections
 
-    def _get_tests_databases(self, test):
+    def _get_tests_databases(self, multi_db):
         ''' Get databases for flush: according to test's multi_db attribute
             only defuault db or all databases will be flushed.
         '''
         connections = self._get_databases()
-        if getattr_test(test, 'multi_db', False):
+        if multi_db:
             if not MULTIDB_SUPPORT:
                 raise RuntimeError('This test should be skipped but for a reason it is not')
             else:
@@ -495,7 +572,7 @@ class DjangoPlugin(Plugin):
                 commit = True
             else:
                 commit = False
-            for db in self._get_tests_databases(test):
+            for db in self._get_tests_databases(getattr_test(test, 'multi_db')):
                 call_command('loaddata', *getattr_test(test, 'fixtures'), **{'verbosity': 0, 'commit' : commit, 'database' : db})
 
     def _create_test_databases(self):
