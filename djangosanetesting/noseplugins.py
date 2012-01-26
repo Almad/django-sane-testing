@@ -320,8 +320,7 @@ class DjangoPlugin(Plugin):
                 attr_suffix = ''
             else:
                 attr_suffix = '_after_all_tests'
-            if getattr(context, 'database_single_transaction' + attr_suffix, False) \
-                or getattr(context, 'fixtures', None):
+            if getattr(context, 'database_single_transaction' + attr_suffix, False):
                 #TODO: When no test case in this module needing database is run (for example 
                 #      user selected only one unitTestCase), database should not be initialized.
                 #      So it would be best if db is initialized when first test case needing 
