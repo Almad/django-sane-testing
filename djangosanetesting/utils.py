@@ -2,6 +2,9 @@ import os
 from functools import wraps
 import urllib2
 
+from django.core.servers.basehttp import AdminMediaHandler
+from django.core.handlers.wsgi import WSGIHandler
+
 DEFAULT_LIVE_SERVER_PROTOCOL = "http"
 DEFAULT_LIVE_SERVER_PORT = 8000
 DEFAULT_LIVE_SERVER_ADDRESS = '0.0.0.0'
@@ -55,15 +58,35 @@ def is_test_database():
 
     return settings.DATABASE_NAME == test_database_name
 
-def test_database_exists():
-    from django.db import connection, DatabaseError
-    from django.conf import settings
 
+def get_databases():
     try:
-        if getattr(settings, "DATABASE_ENGINE", None) == 'sqlite3':
-            if not os.path.exists(settings.DATABASE_NAME):
-                raise DatabaseError()
-        connection.cursor()
+        from django.db import connections
+    except ImportError:
+        from django.conf import settings
+        from django.db import connection
+
+        if settings.TEST_DATABASE_NAME:
+            connection['TEST_NAME'] = settings.TEST_DATABASE_NAME
+
+        connections = {
+            DEFAULT_DB_ALIAS : connection
+        }
+
+    return connections
+
+
+def test_databases_exist():
+    from django.db import DatabaseError
+
+    connections = get_databases()
+    try:
+        for connection in connections:
+            if connection.settings_dict['NAME'] == 'sqlite3':
+                if not os.path.exists(connection.settings_dict['DATABASE_NAME']):
+                    raise DatabaseError()
+            connection.cursor()
+
         return True
     except DatabaseError, err:
         return False
@@ -158,4 +181,16 @@ def mock_settings(settings_attribute, value):
             return retval
         return wrapped
     return wrapper
+
+
+def get_server_handler():
+    handler = AdminMediaHandler(WSGIHandler())
+    try:
+        from django.contrib.staticfiles.handlers import StaticFilesHandler
+        handler = StaticFilesHandler(handler)
+    except:
+        pass
+
+    return handler
+
 

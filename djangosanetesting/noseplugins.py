@@ -11,11 +11,12 @@ from inspect import ismodule, isclass
 import unittest
 
 from django.core.management import call_command
-from django.core.handlers.wsgi import WSGIHandler
-from django.core.servers.basehttp import  WSGIRequestHandler, AdminMediaHandler, WSGIServerException
+from django.core.servers.basehttp import  WSGIRequestHandler, WSGIServerException
 from django.core.urlresolvers import clear_url_caches
+from django.test import TestCase as DjangoTestCase
 
 import nose
+from nose import SkipTest
 from nose.plugins import Plugin
 
 import djangosanetesting
@@ -25,7 +26,8 @@ from djangosanetesting.cache import flush_django_cache
 #from djagnosanetesting.cache import flush_django_cache
 from djangosanetesting.selenium.driver import selenium
 from djangosanetesting.utils import (
-    get_live_server_path, test_database_exists,
+    get_databases, get_live_server_path, test_databases_exist,
+    get_server_handler,
     DEFAULT_LIVE_SERVER_ADDRESS, DEFAULT_LIVE_SERVER_PORT,
 )
 TEST_CASE_CLASSES = (djangosanetesting.cases.SaneTestCase, unittest.TestCase)
@@ -171,7 +173,7 @@ class TestServerThread(threading.Thread):
     def run(self):
         """Sets up test server and loops over handling http requests."""
         try:
-            handler = AdminMediaHandler(WSGIHandler())
+            handler = get_server_handler()
             server_address = (self.address, self.port)
             httpd = StoppableWSGIServer(server_address, WSGIRequestHandler)
             #httpd = basehttp.WSGIServer(server_address, basehttp.WSGIRequestHandler)
@@ -203,7 +205,7 @@ class AbstractLiveServerPlugin(Plugin):
 
     def configure(self, options, config):
         Plugin.configure(self, options, config)
-    
+
     def start_server(self):
         raise NotImplementedError()
 
@@ -212,12 +214,12 @@ class AbstractLiveServerPlugin(Plugin):
 
     def check_database_multithread_compilant(self):
         # When using memory database, complain as we'd use indepenent databases
-        from django.conf import settings
-        if settings.DATABASE_ENGINE == 'sqlite3' \
-            and (not getattr(settings, 'TEST_DATABASE_NAME', False) or settings.TEST_DATABASE_NAME == ':memory:'):
-            self.skipped = True
-            return False
-            #raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
+        connections = get_databases()
+        for alias in connections:
+            database = connections[alias]
+            if database.settings_dict['NAME'] == ':memory:' and database.settings_dict['ENGINE'] in ('django.db.backends.sqlite3', 'sqlite3'):
+                self.skipped = True
+                return False
         return True
 
     def startTest(self, test):
@@ -226,7 +228,7 @@ class AbstractLiveServerPlugin(Plugin):
         test_case_instance = get_test_case_instance(test)
         if not self.server_started and getattr_test(test, "start_live_server", False):
             if not self.check_database_multithread_compilant():
-                return
+                raise SkipTest("You're running database in memory, but trying to use live server in another thread. Skipping.")
             self.start_server(
                 address=getattr(settings, "LIVE_SERVER_ADDRESS", DEFAULT_LIVE_SERVER_ADDRESS),
                 port=int(getattr(settings, "LIVE_SERVER_PORT", DEFAULT_LIVE_SERVER_PORT))
@@ -285,11 +287,11 @@ class CherryPyLiveServerPlugin(AbstractLiveServerPlugin):
     activation_parameter = '--with-cherrypyliveserver'
 
     def start_server(self, address='0.0.0.0', port=8000):
-        _application = AdminMediaHandler(WSGIHandler())
-        
+        handler = get_server_handler()
+ 
         def application(environ, start_response):
             environ['PATH_INFO'] = environ['SCRIPT_NAME'] + environ['PATH_INFO']
-            return _application(environ, start_response)
+            return handler(environ, start_response)
         
         from cherrypy.wsgiserver import CherryPyWSGIServer
         from threading import Thread
@@ -373,7 +375,7 @@ class DjangoPlugin(Plugin):
 
     def setup_databases(self, verbosity, autoclobber, **kwargs):
         # Taken from Django 1.2 code, (C) respective Django authors. Modified for backward compatibility by me
-        connections = self._get_databases()
+        connections = get_databases()
         old_names = []
         mirrors = []
 
@@ -402,7 +404,7 @@ class DjangoPlugin(Plugin):
 
     def teardown_databases(self, old_config, verbosity, **kwargs):
         # Taken from Django 1.2 code, (C) respective Django authors
-        connections = self._get_databases()
+        connections = get_databases()
         old_names, mirrors = old_config
         # Point all the mirrors back to the originals
         for alias, connection in mirrors:
@@ -425,9 +427,6 @@ class DjangoPlugin(Plugin):
         # FIXME: this should be lazy for tests that do not need test
         # database at all
         
-        from django.conf import settings
-        self.old_name = settings.DATABASE_NAME
-
         flush_cache()
 
     def finalize(self, result):
@@ -447,6 +446,11 @@ class DjangoPlugin(Plugin):
         """
         When preparing test, check whether to make our database fresh
         """
+
+        test_case = get_test_case_class(test)
+        if issubclass(test_case, DjangoTestCase):
+            return
+
         #####
         ### FIXME: It would be nice to separate handlings as plugins et al...but what 
         ### about the context?
@@ -458,6 +462,7 @@ class DjangoPlugin(Plugin):
         
         test_case = get_test_case_class(test)
         test_case_instance = get_test_case_instance(test)
+
         mail.outbox = []
         enable_test(test_case, 'django_plugin_started')
         
@@ -495,6 +500,11 @@ class DjangoPlugin(Plugin):
         """
         After test is run, clear urlconf, caches and database
         """
+
+        test_case = get_test_case_class(test)
+        if issubclass(test_case, DjangoTestCase):
+            return
+
         from django.db import transaction
         from django.conf import settings
 
@@ -592,7 +602,6 @@ class DjangoPlugin(Plugin):
                 if getattr(settings, "FLUSH_TEST_DATABASE_AFTER_INITIAL_SYNCDB", False):
                     getattr(settings, "TEST_DATABASE_FLUSH_COMMAND", flush_database)(self, database=db)
 
-
 class DjangoTranslationPlugin(Plugin):
     """
     For testcases with selenium_start set to True, connect to Selenium RC.
@@ -657,10 +666,14 @@ class SeleniumPlugin(Plugin):
         selenium = getattr(import_module(selenium_module), selenium_cls)
         
         if getattr_test(test, "selenium_start", False):
+            browser = getattr(test_case, 'selenium_browser_command', None)
+            if browser is None:
+                browser = getattr(settings, "SELENIUM_BROWSER_COMMAND", '*opera')
+
             sel = selenium(
                       getattr(settings, "SELENIUM_HOST", 'localhost'),
                       int(getattr(settings, "SELENIUM_PORT", 4444)),
-                      getattr(settings, "SELENIUM_BROWSER_COMMAND", '*opera'),
+                      browser,
                       getattr(settings, "SELENIUM_URL_ROOT", get_live_server_path()),
                   )
             try:

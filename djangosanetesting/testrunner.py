@@ -20,6 +20,9 @@ from djangosanetesting.noseplugins import (
 
 __all__ = ("DstNoseTestSuiteRunner",)
 
+# This file doen't contain tests
+__test__ = False
+
 """
 Act as Django test runner, but use nose. Enable common django-sane-testing
 plugins by default.
@@ -63,7 +66,6 @@ class DstNoseTestSuiteRunner(DjangoTestSuiteRunner):
     
         from django.test import utils
         utils.setup_test_environment()
-        old_db_name = settings.DATABASE_NAME
     
         result_plugin = ResultPlugin()
         plugins = [DjangoPlugin(), SeleniumPlugin(), DjangoTranslationPlugin(), result_plugin]
